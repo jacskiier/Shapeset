@@ -7,10 +7,10 @@ from polygongen import *
 n = 1
 m = 1
 
-genparams = {'inv_chance': 0.5, 'img_shape': (64, 64), 'n_vert_list': [3, 4, 30], 'fg_min': 0.55, 'fg_max': 1.0,
-             'bg_min': 0.0, 'bg_max': 0.45, 'rot_min': 0.0, 'rot_max': 1, 'pos_min': 0, 'pos_max': 1,
+genparams = {'inv_chance': 0.5, 'img_shape': (128, 128), 'n_vert_list': [3], 'fg_min': 0.55, 'fg_max': 1.0,
+             'bg_min': 0.0, 'bg_max': 0.45, 'rot_min': 0.0, 'rot_max': 0.0001, 'pos_min': 0, 'pos_max': 1,
              'scale_min': 0.2, 'scale_max': 0.8, 'rotation_resolution': 255,
-             'nb_poly_max': 2, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 2, 'rejectionmax': 50,
+             'nb_poly_max': 1, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 2, 'rejectionmax': 50,
              'overlap_bool': True}
 
 # genparams2 = {'poly_type' :2,'rot_max' : 1}
@@ -78,7 +78,8 @@ def showresult(it):
         new.set_palette(anglcolorpalette)
         screen.blit(new, (xi + 0, yi + genparams['img_shape'][1]))
 
-        ytmp = wvalid[j, 0, :, :] * 1 + wvalid[j, 1, :, :] * 2 + wvalid[j, 2, :, :] * 3
+        for idx in range(wvalid.shape[1]):
+            ytmp = + wvalid[j, idx, :, :] * (idx + 1)
         new = pygame.surfarray.make_surface(ytmp)
         new.set_palette(anglcolorpalette)
         screen.blit(new, (xi + genparams['img_shape'][0], yi + genparams['img_shape'][1]))
