@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import functools
+
 from curridata import *
 from buildfeaturespolygon import *
 from polygongen import *
@@ -22,7 +24,6 @@ datagenerator = Polygongen
 funclist = [buildimage, buildedgesangle, builddepthmap, buildidentity, buildsegmentation, output, buildedgesanglec]
 dependencies = [None, {'segmentation': 4}, None, None, {'depthmap': 2}, None, {'segmentation': 4}]
 funcparams = {'neighbor': 'V8', 'gaussfiltbool': False, 'sigma': 0.5, 'size': 5}
-nfeatures = 6
 # ------------------
 
 batchsize = 10  # number of images generated at each iteration
@@ -30,7 +31,15 @@ seed = 0  # seed initialization, usefull to reproduce data generation
 funcparams.update({'neg': True})  # if True, the pixel values are in the range [-1,1], if False: [0,1]
 
 # instance creation of the curridata class 
-curridata = Curridata(nfeatures, datagenerator, genparams, funclist, dependencies, funcparams, batchsize, seed)
+curridata = Curridata(datagenerator, genparams, funclist, dependencies, funcparams, batchsize, seed)
+# here you need to hard code the targets and inputs property field
+Curridata.image = property(functools.partial(Curridata.getter, i=0))
+Curridata.edges = property(functools.partial(Curridata.getter, i=1))
+Curridata.depth = property(functools.partial(Curridata.getter, i=2))
+Curridata.identity = property(functools.partial(Curridata.getter, i=3))
+Curridata.segmentation = property(functools.partial(Curridata.getter, i=4))
+Curridata.output = property(functools.partial(Curridata.getter, i=5))
+Curridata.edgesc = property(functools.partial(Curridata.getter, i=6))
 
 ################################################################################
 

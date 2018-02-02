@@ -1,4 +1,10 @@
-import math, copy, numpy
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import math
+import copy
+import numpy
 
 
 class Polygongen(object):
@@ -93,7 +99,7 @@ present
         def gen_rot(theta):
             """return the rotation matrix associated with angle theta around the origin"""
             c, s = math.cos(theta), math.sin(theta)
-            return numpy.asarray(([c, s], [-s, c]))
+            return numpy.asarray(([c, -s], [s, c]))
 
         # -------------- Class attributes initialisation
         self.img_shape = numpy.asarray(img_shape)
@@ -184,17 +190,17 @@ present
                     s[0] = s[1]
                     s[1] = tmp
 
-            if rot_idx1 == 0:  # poly_type 0
+            if rot_idx1 == 0:  # poly_type 0 and poly_type 1
                 r2 = self.rot_mats[0]
-            elif s[0] == s[1]:  # poly_type 1
-                r2 = self.rot_mats[rotation_resolution - rot_idx1]
+            elif s[0] == s[1]:  # poly_type > 1 simplification for equal scales
+                r2 = self.rot_mats[(rotation_resolution - rot_idx1) % rotation_resolution]
             else:  # general case
                 # after the scaling we need to come back to 0 rad rotation, we need to calculate the exact inverse
                 # rotation according to s and rot_idx1 because it might not be in the rotation samples (and
                 # the base won't be exactly horizontal)
                 rot2 = -math.atan(s[1] / s[0] * math.tan(self.rot_rads[rot_idx1]))
                 co, si = math.cos(rot2), math.sin(rot2)
-                r2 = numpy.asarray(([co, si], [-si, co]))
+                r2 = numpy.asarray(([co, -si], [si, co]))
             # coordinate of the vertices of the random polygon
             points = numpy.dot(numpy.dot(numpy.dot(points_orig, r1) * s, r2), r3)  # the order is important
 
@@ -231,7 +237,7 @@ present
 
                         # boolean to say when the estimated overlap is too big
                         overlapbool = s[0] * s[1] * self.aratio[shape_id] * overlapfactor / (
-                                    rval_scale[i, 0] * rval_scale[i, 1] * self.aratio[rval_poly_id[i]]) > self.overlap_max
+                                rval_scale[i, 0] * rval_scale[i, 1] * self.aratio[rval_poly_id[i]]) > self.overlap_max
 
                         if overlapbool:
                             nbrejection += 1  # keep track of the current number of rejection
@@ -243,44 +249,36 @@ present
                     continue  # if rejection > resample s and t
 
             break  # if we are here > polygon is good we can return it
-        return points, rot_idx1, rot_idx3, s, t, nbrejection
+        return points, self.rot_rads[rot_idx1], self.rot_rads[rot_idx3], s, t, nbrejection
 
     def iterator(self, batchsize, seed=0):
 
-        nb_poly_max = self.nb_poly_max
-        # initialisation of the return vector @warning: this is done only at the iterator initialisation
-        rval_nvert = numpy.ndarray((batchsize, nb_poly_max), dtype='uint8')
-        rval_pos = numpy.ndarray((batchsize, nb_poly_max, 2), dtype='int32')
-        rval_rot1 = numpy.ndarray((batchsize, nb_poly_max,), dtype='uint8')
-        rval_rot3 = numpy.ndarray((batchsize, nb_poly_max,), dtype='uint8')
-        rval_scale = numpy.ndarray((batchsize, nb_poly_max, 2), dtype='float64')
-        rval_seed = numpy.ndarray((batchsize, nb_poly_max,), dtype='int32')
-        rval_nbpol = numpy.ndarray(batchsize, dtype='int8')
-        rval_points = [None] * batchsize * nb_poly_max
-        rval_fg = numpy.ndarray((batchsize, nb_poly_max), dtype='uint8')
-        rval_bg = numpy.ndarray(batchsize, dtype='uint8')
+        nb_poly_max = None
 
         rng = numpy.random.RandomState(seed)
 
         while True:
             rejectionmax = self.rejectionmax
 
-            # here we init the return value that need to be initialize at all iteration
-            rval_poly_id = -1 * numpy.ones((batchsize, nb_poly_max,), dtype='int8')
-
             if nb_poly_max != self.nb_poly_max:  # if the size change, reinitialise output vector
+                # set new sizes
                 nb_poly_max = min(self.nb_poly_max, 255)
                 self.nb_poly_min = min(nb_poly_max, self.nb_poly_min)
+
+                # initialisation of the return vector @warning: this is done only at the iterator initialisation
                 rval_nvert = numpy.ndarray((batchsize, nb_poly_max), dtype='uint8')
-                rval_pos = numpy.ndarray((batchsize, nb_poly_max, 2), dtype='int32')
-                rval_rot1 = numpy.ndarray((batchsize, nb_poly_max,), dtype='uint8')
-                rval_rot3 = numpy.ndarray((batchsize, nb_poly_max,), dtype='uint8')
+                rval_pos = numpy.ndarray((batchsize, nb_poly_max, 2), dtype='float64')
+                rval_rot1 = numpy.ndarray((batchsize, nb_poly_max,), dtype='float64')
+                rval_rot3 = numpy.ndarray((batchsize, nb_poly_max,), dtype='float64')
                 rval_scale = numpy.ndarray((batchsize, nb_poly_max, 2), dtype='float64')
                 rval_seed = numpy.ndarray((batchsize, nb_poly_max,), dtype='int32')
                 rval_nbpol = numpy.ndarray(batchsize, dtype='int8')
                 rval_points = [None] * batchsize * nb_poly_max
                 rval_fg = numpy.ndarray((batchsize, nb_poly_max), dtype='uint8')
                 rval_bg = numpy.ndarray(batchsize, dtype='uint8')
+
+            # here we init the return value that need to be initialize at all iteration
+            rval_poly_id = -1 * numpy.ones((batchsize, nb_poly_max,), dtype='int8')
 
             for j in range(batchsize):  # for all the batch
                 nbrejection = 0
@@ -326,6 +324,25 @@ present
                         i = i + 1
                 rval_bg[j] = bg
                 rval_nbpol[j] = nbpol
-            yield {'rval_points': rval_points, 'rval_nbpol': rval_nbpol, 'nb_poly_max': nb_poly_max, 'batchsize': batchsize,
-                   'rval_bg': rval_bg, 'rval_fg': rval_fg, 'rval_poly_id': rval_poly_id, 'img_shape': self.img_shape,
-                   'n_vertices': self.n_vertices}
+            yield {
+                # same for all samples and polygons
+                'nb_poly_max': nb_poly_max,
+                'batchsize': batchsize,
+                'img_shape': self.img_shape,
+                'n_vertices': self.n_vertices,
+
+                # values for each sample
+                'rval_bg': rval_bg,
+                'rval_nbpol': rval_nbpol,
+
+                # values for each sample for each polygon
+                'rval_nvert': rval_nvert,
+                'rval_points': rval_points,
+                'rval_fg': rval_fg,
+                'rval_pos': rval_pos,
+                'rval_rot1': rval_rot1,
+                'rval_rot3': rval_rot3,
+                'rval_scale': rval_scale,
+                'rval_seed': rval_seed,
+                'rval_poly_id': rval_poly_id,
+            }

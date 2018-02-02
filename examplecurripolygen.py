@@ -1,4 +1,8 @@
-import pygame
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import functools
 
 from curridata import *
 from buildfeaturespolygon import *
@@ -7,23 +11,32 @@ from polygongen import *
 n = 1
 m = 1
 
-genparams = {'inv_chance': 0.5, 'img_shape': (128, 128), 'n_vert_list': [3], 'fg_min': 0.55, 'fg_max': 1.0,
-             'bg_min': 0.0, 'bg_max': 0.45, 'rot_min': 0.0, 'rot_max': 0.0001, 'pos_min': 0, 'pos_max': 1,
+genparams = {'inv_chance': 0.5, 'img_shape': (32, 32), 'n_vert_list': [3, 4, 5], 'fg_min': 0.55, 'fg_max': 1.0,
+             'bg_min': 0.0, 'bg_max': 0.45, 'rot_min': 0.0, 'rot_max': 1.0, 'pos_min': 0, 'pos_max': 1,
              'scale_min': 0.2, 'scale_max': 0.8, 'rotation_resolution': 255,
-             'nb_poly_max': 1, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 2, 'rejectionmax': 50,
+             'nb_poly_max': 1, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 1, 'rejectionmax': 50,
              'overlap_bool': True}
 
 # genparams2 = {'poly_type' :2,'rot_max' : 1}
 
 datagenerator = Polygongen
-funclist = [buildimage, buildedgesangle, builddepthmap, buildidentity, buildsegmentation, output, buildedgesanglec]
-dependencies = [None, {'segmentation': 4}, None, None, {'depthmap': 2}, None, {'segmentation': 4}]
+funclist = [buildimage, buildedgesangle, builddepthmap, buildidentity, buildsegmentation, output, buildedgesanglec, output_angles]
+dependencies = [None, {'segmentation': 4}, None, None, {'depthmap': 2}, None, {'segmentation': 4}, None]
 funcparams = {'neighbor': 'V8', 'gaussfiltbool': False, 'sigma': 0.5, 'size': 5, 'neg': True}
-nfeatures = 6
 batchsize = n * m
 seed = 0
 
-curridata = Curridata(nfeatures, datagenerator, genparams, funclist, dependencies, funcparams, batchsize, seed)
+curridata = Curridata(datagenerator, genparams, funclist, dependencies, funcparams, batchsize, seed,
+                      generatorReturnsBatch=True, feature_input=0, feature_output=7)
+# here you need to hard code the targets and inputs property field
+Curridata.image = property(functools.partial(Curridata.getter, i=0))
+Curridata.edges = property(functools.partial(Curridata.getter, i=1))
+Curridata.depth = property(functools.partial(Curridata.getter, i=2))
+Curridata.identity = property(functools.partial(Curridata.getter, i=3))
+Curridata.segmentation = property(functools.partial(Curridata.getter, i=4))
+Curridata.output = property(functools.partial(Curridata.getter, i=5))
+Curridata.edgesc = property(functools.partial(Curridata.getter, i=6))
+Curridata.output_angles = property(functools.partial(Curridata.getter, i=7))
 # curridata.changegenparam(genparams2)
 
 # ------------------------------------------------------------------------------------------------
@@ -45,7 +58,7 @@ if funcparams['neighbor'] is 'V4':
 
 
 def showresult(it):
-    curridata.next()
+    batch_data = curridata.next()
 
     xvalid = (numpy.reshape((curridata.image + 1) * 0.5 * 255,
                             (batchsize, genparams['img_shape'][0], genparams['img_shape'][1])) / 255.0 * 250 + 5)
@@ -111,6 +124,7 @@ def showresult(it):
 
         pygame.display.update()
         print (curridata.output[j, :])
+        print (curridata.output_angles)
         # raw_input("Please press Enter")
     it += 1
     print (it)
@@ -145,10 +159,17 @@ def genex(curridata, n, mode=1):
 
 # ------------------------------------------------------------------------------------------------
 
+# Fix Python 2.x.
+try:
+    # in python 2.x we want raw_input
+    get_input = raw_input
+except NameError:
+    # in python 3.x we want input
+    get_input = input
 
 # curridata.gen.rot_min=0
 for i in range(100):
     iteration = showresult(iteration)
-    raw_input('Press enter to continue generation')
+    get_input('Press enter to continue generation')
 
 # pygame.display.quit()

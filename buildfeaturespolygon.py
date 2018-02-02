@@ -1,4 +1,10 @@
-import numpy, pygame, math
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import numpy
+import pygame
+import math
 
 pygame.surfarray.use_arraytype('numpy')
 
@@ -208,7 +214,7 @@ def buildedgesangle(rval_points, rval_nbpol, nb_poly_max, batchsize, img_shape, 
                     angl[k1] = 1
                 elif angltmp > math.pi / 8 < angltmp <= 3 * math.pi / 8:
                     angl[k1] = 2
-                elif 3 * math.pi / 8 < angltmp <= 5 * math.pi / 8 :
+                elif 3 * math.pi / 8 < angltmp <= 5 * math.pi / 8:
                     angl[k1] = 3
                 elif 5 * math.pi / 8 < angltmp <= 7 * math.pi / 8:
                     angl[k1] = 4
@@ -565,6 +571,15 @@ def buildedgesanglec(rval_points, rval_nbpol, nb_poly_max, batchsize, img_shape,
         rval_angles[j, 2, :, :] = (angl3 * isurfaceedgesc + angl2 * surfaceedgesc) * irval_edges
         rval_angles[j, 3, :, :] = (angl4 * isurfaceedgesc + angl3 * surfaceedgesc) * irval_edges
     return rval_angles_flat * 1.0 if not neg else (rval_angles_flat * 2 - 1) * 1.0
+
+
+def output_angles(rval_rot3, nb_poly_max, batchsize, **dic):
+    rval_output = numpy.ones((batchsize, nb_poly_max), dtype='float64') * -1
+    for j in range(batchsize):
+        for i in range(nb_poly_max):
+            rval_output[j, i] = rval_rot3[j, i]
+
+    return rval_output
 
 # def drawpolygon(oldimage,color,points):
 # points = numpy.concatenate([points,numpy.asarray([points[0,:]])],0)
