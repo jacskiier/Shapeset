@@ -28,8 +28,10 @@ def buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg
 
 # ----------------------------------------------------
 
-# the function that uses the data from polygon generator to make input features (batch_size, Width, Height, Color)
 def buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, **dic):
+    """ Uses the data from polygon generator to make input features of shape (batch_size, Width, Height, Color)
+
+    """
     surface = pygame.Surface(img_shape, depth=8)
     surface_ndarray = np.asarray(pygame.surfarray.pixels2d(surface))
 
@@ -48,7 +50,9 @@ def buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval
     rval_image_out = rval_image_out[..., None]
     return rval_image_out
 
+
 # ----------------------------------------------------
+
 def buildsegmentation(rval_points, rval_nbpol, nb_poly_max, batchsize, img_shape, depthmap, neg, neighbor='V8', **dic):
     if neighbor is 'V4':
         nmult = 2
@@ -131,6 +135,7 @@ def output(rval_poly_id, n_vertices, nb_poly_max, batchsize, **dic):
             rval_output[j, i] = ((rval_poly_id[j, :] == tmp * i).sum())
 
     return rval_output * 1.0
+
 
 # ----------------------------------------------------------
 
@@ -364,7 +369,7 @@ class Edgefilter(object):
 
         for k in range(batchsize):
             image2 = np.ones((img_shape[0] + 2 * (3 + gaussfiltbool * size), img_shape[1] + 2 * (3 + gaussfiltbool * size)),
-                                dtype='uint8') * rval_bg[k]
+                             dtype='uint8') * rval_bg[k]
             image2[3 + gaussfiltbool * size:-3 - gaussfiltbool * size, 3 + gaussfiltbool * size:-3 - gaussfiltbool * size] = image[k, :, :]
             fftimage = np.fft.rfft2(image2[:, :], fftshape)
             if gaussfiltbool:
@@ -430,7 +435,7 @@ class Edgefilter(object):
 
         for k in range(batchsize):
             image2 = np.ones((img_shape[0] + 2 * (3 + gaussfiltbool * size), img_shape[1] + 2 * (3 + gaussfiltbool * size)),
-                                dtype='uint8') * rval_bg[k]
+                             dtype='uint8') * rval_bg[k]
             image2[3 + gaussfiltbool * size:-3 - gaussfiltbool * size, 3 + gaussfiltbool * size:-3 - gaussfiltbool * size] = image[k, :, :]
             fftimage = np.fft.rfft2(image2[:, :], fftshape)
             if gaussfiltbool:
@@ -600,6 +605,44 @@ def output_angles(rval_rot3, nb_poly_max, batchsize, **dic):
             rval_output[j, i] = rval_rot3[j, i]
 
     return rval_output
+
+
+def output_as_Shapeset3x2_categorical(rval_poly_id, n_vertices, nb_poly_max, batchsize, **dic):
+    """the function that uses the data from polygon generator to make outputs (batch_size, num_classes)
+
+    """
+
+    def convertout(out):
+        # function borrowed from simpleexample.py converts numbers for each shape ID to class integers
+        # only works for the Shapeset 3x2 input
+        target = 0 * ((out[:, 0] == 1) * (out[:, 1] == 0) * (out[:, 2] == 0)) + \
+                 1 * ((out[:, 0] == 0) * (out[:, 1] == 1) * (out[:, 2] == 0)) + \
+                 2 * ((out[:, 0] == 0) * (out[:, 1] == 0) * (out[:, 2] == 1)) + \
+                 3 * ((out[:, 0] == 1) * (out[:, 1] == 1) * (out[:, 2] == 0)) + \
+                 4 * ((out[:, 0] == 0) * (out[:, 1] == 1) * (out[:, 2] == 1)) + \
+                 5 * ((out[:, 0] == 1) * (out[:, 1] == 0) * (out[:, 2] == 1)) + \
+                 6 * ((out[:, 0] == 2) * (out[:, 1] == 0) * (out[:, 2] == 0)) + \
+                 7 * ((out[:, 0] == 0) * (out[:, 1] == 2) * (out[:, 2] == 0)) + \
+                 8 * ((out[:, 0] == 0) * (out[:, 1] == 0) * (out[:, 2] == 2))
+        return target
+
+    # get output as number of shapes for each shape ID
+    rval_output = output(rval_poly_id=rval_poly_id,
+                         n_vertices=n_vertices,
+                         nb_poly_max=nb_poly_max,
+                         batchsize=batchsize,
+                         **dic)
+
+    # convert to integers
+    rval_integers = convertout(rval_output)
+
+    # convert to categorical
+    y = np.array(rval_integers, dtype='int').ravel()
+    n = y.shape[0]
+    categorical = np.zeros((n, 9))
+    categorical[np.arange(n), y] = 1
+
+    return categorical
 
 # def drawpolygon(oldimage,color,points):
 # points = np.concatenate([points,np.asarray([points[0,:]])],0)

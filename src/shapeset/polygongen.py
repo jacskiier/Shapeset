@@ -4,7 +4,7 @@ from __future__ import print_function
 
 import math
 import copy
-import numpy
+import numpy as np
 
 
 class Polygongen(object):
@@ -90,7 +90,7 @@ present
 
         def n_sided(n):
             """return n equally spaced points on circle of radius 0.5 with horizontal down edge"""
-            return 0.5 * numpy.asarray([circ_pos((1.0 * t) / n + 1.0 / (2 * n) + 1.0 / 4) for t in range(n)])
+            return 0.5 * np.asarray([circ_pos((1.0 * t) / n + 1.0 / (2 * n) + 1.0 / 4) for t in range(n)])
 
         def arearatio(n):
             """return the area ratio of the regular polygone with n vertice in comparison to the circle one"""
@@ -99,10 +99,10 @@ present
         def gen_rot(theta):
             """return the rotation matrix associated with angle theta around the origin"""
             c, s = math.cos(theta), math.sin(theta)
-            return numpy.asarray(([c, -s], [s, c]))
+            return np.asarray(([c, -s], [s, c]))
 
         # -------------- Class attributes initialisation
-        self.img_shape = numpy.asarray(img_shape)
+        self.img_shape = np.asarray(img_shape)
         self.n_vertices = copy.copy(n_vert_list)  # not to give the pointer
         self.poly_type = int(poly_type)
         self.nb_poly_min = int(nb_poly_min)
@@ -182,7 +182,7 @@ present
 
             if poly_type < 1:  # if we want regular polygon the deformation should be the same on both axis
                 a = rng.uniform(low=scale_min, high=scale_max, size=1) * img_shape
-                s = numpy.asarray([a[0], a[0]])
+                s = np.asarray([a[0], a[0]])
             else:
                 s = rng.uniform(low=scale_min, high=scale_max, size=2) * img_shape
                 if s[1] > s[0]:  # to keep the base in the horizontal direction s[0] must be bigger
@@ -200,16 +200,16 @@ present
                 # the base won't be exactly horizontal)
                 rot2 = -math.atan(s[1] / s[0] * math.tan(self.rot_rads[rot_idx1]))
                 co, si = math.cos(rot2), math.sin(rot2)
-                r2 = numpy.asarray(([co, -si], [si, co]))
+                r2 = np.asarray(([co, -si], [si, co]))
             # coordinate of the vertices of the random polygon
-            points = numpy.dot(numpy.dot(numpy.dot(points_orig, r1) * s, r2), r3)  # the order is important
+            points = np.dot(np.dot(np.dot(points_orig, r1) * s, r2), r3)  # the order is important
 
             # find the max-min box of the vertices position
             maxpts = (points.max(0) + 1) / img_shape  # +1 because the shapes shouldn't touch the border of the image
             minpts = (points.min(0) - 1) / img_shape  # -1 because the shapes shouldn't touch the border of the image
 
             # sample a translation and keep the entire object in the image
-            t = (numpy.asarray([rng.uniform(low=max(pos_min, -minpts[0]), high=min(pos_max, 1 - maxpts[0])),
+            t = (np.asarray([rng.uniform(low=max(pos_min, -minpts[0]), high=min(pos_max, 1 - maxpts[0])),
                                 rng.uniform(low=max(pos_min, -minpts[1]), high=min(pos_max, 1 - maxpts[1]))])).reshape(2) * img_shape
 
             # apply the translation
@@ -226,8 +226,8 @@ present
                     distancec = math.sqrt(pow(vectc[0], 2) + pow(vectc[1], 2))  # its length
 
                     # projection of the vertices on vectc for the old ith polygon and -vectc for the new one
-                    proj1 = numpy.dot(rval_points[i] - rval_pos[i], vectc) / distancec
-                    proj2 = numpy.dot(points - t, -vectc) / distancec
+                    proj1 = np.dot(rval_points[i] - rval_pos[i], vectc) / distancec
+                    proj2 = np.dot(points - t, -vectc) / distancec
 
                     proj = (proj1.max() + proj2.max())  # take the max value on both
                     distb = proj >= distancec  # if the sum is > distancec there may be an overlap
@@ -255,7 +255,7 @@ present
 
         nb_poly_max = None
 
-        rng = numpy.random.RandomState(seed)
+        rng = np.random.RandomState(seed)
 
         while True:
             rejectionmax = self.rejectionmax
@@ -266,19 +266,19 @@ present
                 self.nb_poly_min = min(nb_poly_max, self.nb_poly_min)
 
                 # initialisation of the return vector @warning: this is done only at the iterator initialisation
-                rval_nvert = numpy.ndarray((batchsize, nb_poly_max), dtype='uint8')
-                rval_pos = numpy.ndarray((batchsize, nb_poly_max, 2), dtype='float64')
-                rval_rot1 = numpy.ndarray((batchsize, nb_poly_max,), dtype='float64')
-                rval_rot3 = numpy.ndarray((batchsize, nb_poly_max,), dtype='float64')
-                rval_scale = numpy.ndarray((batchsize, nb_poly_max, 2), dtype='float64')
-                rval_seed = numpy.ndarray((batchsize, nb_poly_max,), dtype='int32')
-                rval_nbpol = numpy.ndarray(batchsize, dtype='int8')
+                rval_nvert = np.ndarray((batchsize, nb_poly_max), dtype='uint8')
+                rval_pos = np.ndarray((batchsize, nb_poly_max, 2), dtype='float64')
+                rval_rot1 = np.ndarray((batchsize, nb_poly_max,), dtype='float64')
+                rval_rot3 = np.ndarray((batchsize, nb_poly_max,), dtype='float64')
+                rval_scale = np.ndarray((batchsize, nb_poly_max, 2), dtype='float64')
+                rval_seed = np.ndarray((batchsize, nb_poly_max,), dtype='int32')
+                rval_nbpol = np.ndarray(batchsize, dtype='int8')
                 rval_points = [None] * batchsize * nb_poly_max
-                rval_fg = numpy.ndarray((batchsize, nb_poly_max), dtype='uint8')
-                rval_bg = numpy.ndarray(batchsize, dtype='uint8')
+                rval_fg = np.ndarray((batchsize, nb_poly_max), dtype='uint8')
+                rval_bg = np.ndarray(batchsize, dtype='uint8')
 
             # here we init the return value that need to be initialize at all iteration
-            rval_poly_id = -1 * numpy.ones((batchsize, nb_poly_max,), dtype='int8')
+            rval_poly_id = -1 * np.ones((batchsize, nb_poly_max,), dtype='int8')
 
             for j in range(batchsize):  # for all the batch
                 nbrejection = 0
