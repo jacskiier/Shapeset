@@ -9,7 +9,7 @@ import copy
 class Curridata(object):
 
     def __init__(self, datagenerator, genparams, funclist, dependencies, funcparams={}, batchsize=1, seed=0,
-                 generatorReturnsBatch=False, feature_input=0, feature_output=0):
+                 generatorReturnsBatch=False, feature_input=0, feature_output=1):
         """A generator that wraps another generator and processes that data into formats based on given functions
 
         :param datagenerator: the class to use as the data generator
