@@ -39,27 +39,6 @@ class TestCurridata(TestCase):
         n_train_batches = 31
         final_output_size = num_classes
 
-        # the function that uses the data from polygon generator to make input features (batch_size, Width, Height, Color)
-        def buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, **dic):
-            surface = pygame.Surface(img_shape, depth=8)
-            surface_ndarray = np.asarray(pygame.surfarray.pixels2d(surface))
-
-            rval_image = np.ndarray((batchsize, img_shape[0], img_shape[1]), dtype='uint8')
-            rval_image_flat = rval_image.reshape(batchsize, img_shape[0] * img_shape[1])
-
-            for j in range(batchsize):
-                surface.fill(int(int(rval_bg[j])))
-
-                for i in range(rval_nbpol[j]):
-                    pygame.draw.polygon(surface, int(int(rval_fg[j, i])), rval_points[nb_poly_max * j + i], 0)
-                rval_image[j] = surface_ndarray
-            rval_image_flat = rval_image_flat / 255.0 if not neg else (rval_image_flat / 255.0) * 2 - 1
-            rval_image_out = rval_image_flat
-
-            # rval_image_out = np.reshape(rval_image_flat, newshape=(batchsize, img_shape[0], img_shape[1]))
-            # rval_image_out = rval_image[..., None]
-            return rval_image_out
-
         # the function that uses the data from polygon generator to make outputs (batch_size, num_classes)
         def output_as_categorical(rval_poly_id, n_vertices, nb_poly_max, batchsize, **dic):
             def convertout(out):
