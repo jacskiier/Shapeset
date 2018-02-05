@@ -25,7 +25,7 @@ class TestCurridata(TestCase):
         np.random.seed(1337)
         image_shape = (32, 32)
         num_classes = 9
-        batch_size = 100
+        batch_size = 10
         n_epochs = 8000
         n_train_batches = 31
         final_output_size = num_classes
@@ -34,7 +34,7 @@ class TestCurridata(TestCase):
         genparams = {'inv_chance': 0.5, 'img_shape': image_shape, 'n_vert_list': [3, 4, 20], 'fg_min': 0.55, 'fg_max': 1.0,
                      'bg_min': 0.0, 'bg_max': 0.45, 'rot_min': 0.0, 'rot_max': 1.0, 'pos_min': 0, 'pos_max': 1,
                      'scale_min': 0.2, 'scale_max': 0.8, 'rotation_resolution': 255,
-                     'nb_poly_max': 1, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 1, 'rejectionmax': 50,
+                     'nb_poly_max': 2, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 2, 'rejectionmax': 50,
                      'overlap_bool': True}
         datagenerator = Polygongen
         funclist = [bfp.buildimage, bfp.output_as_Shapeset3x2_categorical]

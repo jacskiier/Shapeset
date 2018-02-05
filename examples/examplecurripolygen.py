@@ -4,6 +4,8 @@ from __future__ import print_function
 
 import functools
 
+import numpy as np
+
 from shapeset.curridata import *
 from shapeset.buildfeaturespolygon import *
 from shapeset.polygongen import *
@@ -11,17 +13,18 @@ from shapeset.polygongen import *
 n = 1
 m = 1
 
-genparams = {'inv_chance': 0.5, 'img_shape': (32, 32), 'n_vert_list': [3, 4, 5], 'fg_min': 0.55, 'fg_max': 1.0,
+genparams = {'inv_chance': 0.5, 'img_shape': (128, 128), 'n_vert_list': [3, 4, 20], 'fg_min': 0.55, 'fg_max': 1.0,
              'bg_min': 0.0, 'bg_max': 0.45, 'rot_min': 0.0, 'rot_max': 1.0, 'pos_min': 0, 'pos_max': 1,
              'scale_min': 0.2, 'scale_max': 0.8, 'rotation_resolution': 255,
-             'nb_poly_max': 1, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 1, 'rejectionmax': 50,
+             'nb_poly_max': 2, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 1, 'rejectionmax': 50,
              'overlap_bool': True}
 
 # genparams2 = {'poly_type' :2,'rot_max' : 1}
 
 datagenerator = Polygongen
-funclist = [buildimage, buildedgesangle, builddepthmap, buildidentity, buildsegmentation, output, buildedgesanglec, output_angles]
-dependencies = [None, {'segmentation': 4}, None, None, {'depthmap': 2}, None, {'segmentation': 4}, None]
+funclist = [buildimage, buildedgesangle, builddepthmap, buildidentity, buildsegmentation, output, buildedgesanglec, output_angles,
+            output_as_Shapeset3x2_categorical, output_as_ShapesetNxM_categorical]
+dependencies = [None, {'segmentation': 4}, None, None, {'depthmap': 2}, None, {'segmentation': 4}, None, None, None]
 funcparams = {'neighbor': 'V8', 'gaussfiltbool': False, 'sigma': 0.5, 'size': 5, 'neg': True}
 batchsize = n * m
 seed = 0
@@ -37,6 +40,8 @@ Curridata.segmentation = property(functools.partial(Curridata.getter, i=4))
 Curridata.output = property(functools.partial(Curridata.getter, i=5))
 Curridata.edgesc = property(functools.partial(Curridata.getter, i=6))
 Curridata.output_angles = property(functools.partial(Curridata.getter, i=7))
+Curridata.output_as_Shapeset3x2_categorical = property(functools.partial(Curridata.getter, i=8))
+Curridata.output_as_ShapesetNxM_categorical= property(functools.partial(Curridata.getter, i=9))
 # curridata.changegenparam(genparams2)
 
 # ------------------------------------------------------------------------------------------------
@@ -60,16 +65,16 @@ if funcparams['neighbor'] is 'V4':
 def showresult(it):
     batch_data = curridata.next()
 
-    xvalid = (numpy.reshape((curridata.image + 1) * 0.5 * 255,
+    xvalid = (np.reshape((curridata.image + 1) * 0.5 * 255,
                             (batchsize, genparams['img_shape'][0], genparams['img_shape'][1])) / 255.0 * 250 + 5)
-    yvalid = numpy.reshape((curridata.edges + 1) * 0.5, (batchsize, 4, genparams['img_shape'][0], genparams['img_shape'][1]))
-    zvalid = (numpy.reshape((curridata.depth + 1) * 0.5 * 255,
+    yvalid = np.reshape((curridata.edges + 1) * 0.5, (batchsize, 4, genparams['img_shape'][0], genparams['img_shape'][1]))
+    zvalid = (np.reshape((curridata.depth + 1) * 0.5 * 255,
                             (batchsize, genparams['img_shape'][0], genparams['img_shape'][1])) / 255.0 * 250 + 5)
-    wvalid = numpy.reshape((curridata.identity + 1) * 0.5,
+    wvalid = np.reshape((curridata.identity + 1) * 0.5,
                            (batchsize, len(genparams['n_vert_list']), genparams['img_shape'][0], genparams['img_shape'][1]))
-    svalid = numpy.reshape((curridata.segmentation + 1) * 0.5 * 255,
+    svalid = np.reshape((curridata.segmentation + 1) * 0.5 * 255,
                            (batchsize, genparams['img_shape'][0] * nmult, genparams['img_shape'][1]))
-    tvalid = (numpy.reshape((curridata.edgesc + 1) * 0.5 * 255,
+    tvalid = (np.reshape((curridata.edgesc + 1) * 0.5 * 255,
                             (batchsize, 4, genparams['img_shape'][0], genparams['img_shape'][1])) / 255.0 * 250 + 5)
 
     for j in range(batchsize):
@@ -123,8 +128,14 @@ def showresult(it):
         screen.blit(new, (xi + genparams['img_shape'][0], yi + genparams['img_shape'][1] * 5))
 
         pygame.display.update()
+        print('\noutput')
         print (curridata.output[j, :])
+        print('\noutput_as_angles')
         print (curridata.output_angles)
+        print('\noutput_as_Shapeset3x2_categorical')
+        print (curridata.output_as_Shapeset3x2_categorical)
+        print('\noutput_as_ShapesetMxN_categorical')
+        print (curridata.output_as_ShapesetNxM_categorical)
         # raw_input("Please press Enter")
     it += 1
     print (it)

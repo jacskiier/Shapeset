@@ -5,6 +5,7 @@ from __future__ import print_function
 import numpy as np
 import pygame
 import math
+import itertools
 
 pygame.surfarray.use_arraytype('numpy')
 
@@ -640,6 +641,38 @@ def output_as_Shapeset3x2_categorical(rval_poly_id, n_vertices, nb_poly_max, bat
     y = np.array(rval_integers, dtype='int').ravel()
     n = y.shape[0]
     categorical = np.zeros((n, 9))
+    categorical[np.arange(n), y] = 1
+
+    return categorical
+
+
+def output_as_ShapesetNxM_categorical(rval_poly_id, n_vertices, nb_poly_max, batchsize, **dic):
+    """the function that uses the data from polygon generator to make outputs (batch_size, num_classes)
+
+    """
+    # get output as number of shapes for each shape ID
+    rval_output = output(rval_poly_id=rval_poly_id,
+                         n_vertices=n_vertices,
+                         nb_poly_max=nb_poly_max,
+                         batchsize=batchsize,
+                         **dic)
+
+    # convert to integers
+    r = len(n_vertices)
+    k = nb_poly_max
+    combinationsOfAllCounts = np.array(list(itertools.product(np.arange(k + 1), repeat=r)))
+    combinationsWithCorrectCounts = combinationsOfAllCounts[np.sum(combinationsOfAllCounts, axis=1) <= k]
+    rval_integers = []
+    for idx in range(rval_output.shape[0]):
+        looking = rval_output[idx]
+        index = np.where(np.all(combinationsWithCorrectCounts == looking, axis=1))[0]
+        rval_integers.append(index[0])
+
+    totalPossibleClasses = combinationsWithCorrectCounts.shape[0]
+    # convert to categorical
+    y = np.array(rval_integers, dtype='int').ravel()
+    n = y.shape[0]
+    categorical = np.zeros((n, totalPossibleClasses))
     categorical[np.arange(n), y] = 1
 
     return categorical
