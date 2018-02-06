@@ -645,6 +645,7 @@ def output_as_Shapeset3x2_categorical(rval_poly_id, n_vertices, nb_poly_max, bat
 
     return categorical
 
+
 # holds the saved combinations so we don't rebuild them everytime the function is called
 _saved_combinations = {}
 
@@ -661,6 +662,7 @@ def output_as_ShapesetNxM_categorical(rval_poly_id, n_vertices, nb_poly_max, bat
                          **dic)
 
     # convert to integers
+    # first get r choose k possibilities and save for later use
     r = len(n_vertices)
     k = nb_poly_max
     combo = (r, k)
@@ -668,16 +670,19 @@ def output_as_ShapesetNxM_categorical(rval_poly_id, n_vertices, nb_poly_max, bat
         combinationsWithCorrectCounts = _saved_combinations[combo]
     else:
         combinationsOfAllCounts = np.array(list(itertools.product(np.arange(k + 1), repeat=r)))
-        combinationsWithCorrectCounts = combinationsOfAllCounts[np.sum(combinationsOfAllCounts, axis=1) <= k]
+        total_counts = np.sum(combinationsOfAllCounts, axis=1)
+        combinationsWithCorrectCounts = combinationsOfAllCounts[np.logical_and(0 < total_counts, total_counts <= k)]
         _saved_combinations[combo] = combinationsWithCorrectCounts
 
-    rval_integers = []
-    for idx in range(rval_output.shape[0]):
-        looking = rval_output[idx]
-        index = np.where(np.all(combinationsWithCorrectCounts == looking, axis=1))[0]
-        rval_integers.append(index[0])
+    # compare the possibilities to the given output to find the indices
+    comparison = combinationsWithCorrectCounts[:, None, :] == rval_output[None, :, :]
+    comparison_2D = np.all(comparison, axis=-1)
+    indicesTemp, sourceIndexTemp = np.where(comparison_2D)
+    rval_integers = indicesTemp[sourceIndexTemp]
 
+    # get total number of classes
     totalPossibleClasses = combinationsWithCorrectCounts.shape[0]
+
     # convert to categorical
     y = np.array(rval_integers, dtype='int').ravel()
     n = y.shape[0]
