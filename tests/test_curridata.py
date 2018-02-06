@@ -27,8 +27,8 @@ class TestCurridata(TestCase):
         image_shape = (32, 32)
         num_classes = 9
         batch_size = 10
-        n_epochs = 8000
-        n_train_batches = 31
+        n_epochs = 2500
+        n_train_batches = 1000
         final_output_size = num_classes
 
         # make the Curridata generator
