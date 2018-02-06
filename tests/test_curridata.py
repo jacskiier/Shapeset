@@ -78,14 +78,14 @@ class TestCurridata(TestCase):
         model.summary()
 
         # fit the model
-        callbacks = []
+        training_callbacks = []
         rlr = ReduceLROnPlateau(factor=0.8, patience=100, verbose=1)
-        callbacks.append(rlr)
+        training_callbacks.append(rlr)
         history = model.fit_generator(generator=curridata,
                                       steps_per_epoch=n_train_batches,
                                       epochs=n_epochs,
                                       verbose=2,
-                                      callbacks=callbacks)
+                                      callbacks=training_callbacks)
 
         # how did we do?
         self.assertTrue(history.history['categorical_accuracy'][-1] > 0.50)
