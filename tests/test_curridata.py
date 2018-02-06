@@ -79,7 +79,7 @@ class TestCurridata(TestCase):
 
         # fit the model
         training_callbacks = []
-        rlr = ReduceLROnPlateau(factor=0.8, patience=100, verbose=1)
+        rlr = ReduceLROnPlateau(monitor='loss', factor=0.8, patience=100, verbose=1)
         training_callbacks.append(rlr)
         history = model.fit_generator(generator=curridata,
                                       steps_per_epoch=n_train_batches,
