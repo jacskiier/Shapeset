@@ -11,6 +11,7 @@ import shapeset.buildfeaturespolygon as bfp
 
 from keras import models
 from keras import layers
+from keras.callbacks import ReduceLROnPlateau
 
 
 class TestCurridata(TestCase):
@@ -37,7 +38,7 @@ class TestCurridata(TestCase):
                      'nb_poly_max': 2, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 2, 'rejectionmax': 50,
                      'overlap_bool': True}
         datagenerator = Polygongen
-        funclist = [bfp.buildimage, bfp.output_as_Shapeset3x2_categorical]
+        funclist = [bfp.buildimage_4D, bfp.output_as_Shapeset3x2_categorical]
         dependencies = [None, None]
         funcparams = {'neighbor': 'V8', 'gaussfiltbool': False, 'sigma': 0.5, 'size': 5, 'neg': True}
         seed = 0
@@ -46,23 +47,23 @@ class TestCurridata(TestCase):
 
         # build the architecture for the ANN
 
-        # dense architecture. make sure to change funclist first function to buildimage
-        inputTensor = layers.Input(shape=(image_shape[0] * image_shape[1],), name="Inputs")
-        lastOutputTensor = inputTensor
-        activation = 'tanh'
-        lastOutputTensor = layers.Dense(1000, activation=activation)(lastOutputTensor)
-        lastOutputTensor = layers.Dense(1000, activation=activation)(lastOutputTensor)
-        lastOutputTensor = layers.Dense(1000, activation=activation)(lastOutputTensor)
-        lastOutputTensor = layers.Dense(1000, activation=activation)(lastOutputTensor)
-        lastOutputTensor = layers.Dense(1000, activation=activation)(lastOutputTensor)
-
-        # # convolutional architecture. make sure to change funclist first function to buildimage_4D
-        # inputTensor = layers.Input(shape=image_shape + (1,), name="Inputs")
+        # # dense architecture. make sure to change funclist first function to buildimage
+        # inputTensor = layers.Input(shape=(image_shape[0] * image_shape[1],), name="Inputs")
         # lastOutputTensor = inputTensor
-        # lastOutputTensor = layers.Conv2D(filters=8, kernel_size=3, activation='relu')(lastOutputTensor)
-        # lastOutputTensor = layers.MaxPooling2D(pool_size=2)(lastOutputTensor)
-        # lastOutputTensor = layers.Conv2D(filters=4, kernel_size=(3, 3), activation='relu', padding='same')(lastOutputTensor)
-        # lastOutputTensor = layers.GlobalAveragePooling2D()(lastOutputTensor)
+        # activation = 'tanh'
+        # lastOutputTensor = layers.Dense(1000, activation=activation)(lastOutputTensor)
+        # lastOutputTensor = layers.Dense(1000, activation=activation)(lastOutputTensor)
+        # lastOutputTensor = layers.Dense(1000, activation=activation)(lastOutputTensor)
+        # lastOutputTensor = layers.Dense(1000, activation=activation)(lastOutputTensor)
+        # lastOutputTensor = layers.Dense(1000, activation=activation)(lastOutputTensor)
+
+        # convolutional architecture. make sure to change funclist first function to buildimage_4D
+        inputTensor = layers.Input(shape=image_shape + (1,), name="Inputs")
+        lastOutputTensor = inputTensor
+        lastOutputTensor = layers.Conv2D(filters=8, kernel_size=3, activation='relu')(lastOutputTensor)
+        lastOutputTensor = layers.MaxPooling2D(pool_size=2)(lastOutputTensor)
+        lastOutputTensor = layers.Conv2D(filters=4, kernel_size=(3, 3), activation='relu', padding='same')(lastOutputTensor)
+        lastOutputTensor = layers.GlobalAveragePooling2D()(lastOutputTensor)
 
         # final softmax layer
         lastOutputTensor = layers.Dense(final_output_size, activation='linear')(lastOutputTensor)
@@ -78,6 +79,8 @@ class TestCurridata(TestCase):
 
         # fit the model
         callbacks = []
+        rlr = ReduceLROnPlateau(factor=0.8, patience=100, verbose=1)
+        callbacks.append(rlr)
         history = model.fit_generator(generator=curridata,
                                       steps_per_epoch=n_train_batches,
                                       epochs=n_epochs,
