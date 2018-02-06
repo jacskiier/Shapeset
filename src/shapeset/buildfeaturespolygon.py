@@ -677,8 +677,7 @@ def output_as_ShapesetNxM_categorical(rval_poly_id, n_vertices, nb_poly_max, bat
     # compare the possibilities to the given output to find the indices
     comparison = combinationsWithCorrectCounts[:, None, :] == rval_output[None, :, :]
     comparison_2D = np.all(comparison, axis=-1)
-    indicesTemp, sourceIndexTemp = np.where(comparison_2D)
-    rval_integers = indicesTemp[sourceIndexTemp]
+    _, rval_integers = np.nonzero(np.transpose(comparison_2D))
 
     # get total number of classes
     totalPossibleClasses = combinationsWithCorrectCounts.shape[0]
