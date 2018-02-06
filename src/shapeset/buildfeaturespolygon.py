@@ -645,6 +645,9 @@ def output_as_Shapeset3x2_categorical(rval_poly_id, n_vertices, nb_poly_max, bat
 
     return categorical
 
+# holds the saved combinations so we don't rebuild them everytime the function is called
+_saved_combinations = {}
+
 
 def output_as_ShapesetNxM_categorical(rval_poly_id, n_vertices, nb_poly_max, batchsize, **dic):
     """the function that uses the data from polygon generator to make outputs (batch_size, num_classes)
@@ -660,8 +663,14 @@ def output_as_ShapesetNxM_categorical(rval_poly_id, n_vertices, nb_poly_max, bat
     # convert to integers
     r = len(n_vertices)
     k = nb_poly_max
-    combinationsOfAllCounts = np.array(list(itertools.product(np.arange(k + 1), repeat=r)))
-    combinationsWithCorrectCounts = combinationsOfAllCounts[np.sum(combinationsOfAllCounts, axis=1) <= k]
+    combo = (r, k)
+    if combo in _saved_combinations:
+        combinationsWithCorrectCounts = _saved_combinations[combo]
+    else:
+        combinationsOfAllCounts = np.array(list(itertools.product(np.arange(k + 1), repeat=r)))
+        combinationsWithCorrectCounts = combinationsOfAllCounts[np.sum(combinationsOfAllCounts, axis=1) <= k]
+        _saved_combinations[combo] = combinationsWithCorrectCounts
+
     rval_integers = []
     for idx in range(rval_output.shape[0]):
         looking = rval_output[idx]
