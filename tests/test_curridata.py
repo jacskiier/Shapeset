@@ -88,7 +88,7 @@ class TestCurridata(TestCase):
                                       callbacks=callbacks)
 
         # how did we do?
-        self.assertTrue(history.history['categorical_accuracy'][-1] > 0.75)
+        self.assertTrue(history.history['categorical_accuracy'][-1] > 0.50)
 
 
 if __name__ == '__main__':
