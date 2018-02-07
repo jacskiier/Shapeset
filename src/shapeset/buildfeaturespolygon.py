@@ -650,6 +650,26 @@ def output_as_Shapeset3x2_categorical(rval_poly_id, n_vertices, nb_poly_max, bat
 _saved_combinations = {}
 
 
+def get_combinations_with_valid_counts(r, k):
+    combo = (r, k)
+    if combo in _saved_combinations:
+        combinationsWithCorrectCounts = _saved_combinations[combo]
+    else:
+        combinationsOfAllCounts = np.array(list(itertools.product(np.arange(k + 1), repeat=r)))
+        total_counts = np.sum(combinationsOfAllCounts, axis=1)
+        combinationsWithCorrectCounts = combinationsOfAllCounts[np.logical_and(0 < total_counts, total_counts <= k)]
+        _saved_combinations[combo] = combinationsWithCorrectCounts
+    return combinationsWithCorrectCounts
+
+
+def n_classes_for_ShapesetNxM_categorical(n_vertices, nb_poly_max):
+    r = len(n_vertices)
+    k = nb_poly_max
+    combinationsWithCorrectCounts = get_combinations_with_valid_counts(r, k)
+
+    return combinationsWithCorrectCounts.shape[0]
+
+
 def output_as_ShapesetNxM_categorical(rval_poly_id, n_vertices, nb_poly_max, batchsize, **dic):
     """the function that uses the data from polygon generator to make outputs (batch_size, num_classes)
 
@@ -665,14 +685,7 @@ def output_as_ShapesetNxM_categorical(rval_poly_id, n_vertices, nb_poly_max, bat
     # first get r choose k possibilities and save for later use
     r = len(n_vertices)
     k = nb_poly_max
-    combo = (r, k)
-    if combo in _saved_combinations:
-        combinationsWithCorrectCounts = _saved_combinations[combo]
-    else:
-        combinationsOfAllCounts = np.array(list(itertools.product(np.arange(k + 1), repeat=r)))
-        total_counts = np.sum(combinationsOfAllCounts, axis=1)
-        combinationsWithCorrectCounts = combinationsOfAllCounts[np.logical_and(0 < total_counts, total_counts <= k)]
-        _saved_combinations[combo] = combinationsWithCorrectCounts
+    combinationsWithCorrectCounts = get_combinations_with_valid_counts(r, k)
 
     # compare the possibilities to the given output to find the indices
     comparison = combinationsWithCorrectCounts[:, None, :] == rval_output[None, :, :]
