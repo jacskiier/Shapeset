@@ -25,7 +25,7 @@ datagenerator = Polygongen
 funclist = [buildimage, buildedgesangle, builddepthmap, buildidentity, buildsegmentation, output, buildedgesanglec, output_angles,
             output_as_Shapeset3x2_categorical, output_as_ShapesetNxM_categorical]
 dependencies = [None, {'segmentation': 4}, None, None, {'depthmap': 2}, None, {'segmentation': 4}, None, None, None]
-funcparams = {'neighbor': 'V8', 'gaussfiltbool': False, 'sigma': 0.5, 'size': 5, 'neg': True}
+funcparams = {'neighbor': 'V8', 'gaussfiltbool': False, 'sigma': 0.5, 'size': 5, 'neg': True, 'angle_bias': -np.pi}
 batchsize = n * m
 seed = 0
 
