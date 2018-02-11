@@ -599,11 +599,11 @@ def buildedgesanglec(rval_points, rval_nbpol, nb_poly_max, batchsize, img_shape,
     return rval_angles_flat * 1.0 if not neg else (rval_angles_flat * 2 - 1) * 1.0
 
 
-def output_angles(rval_rot3, nb_poly_max, batchsize, angle_bias=0, **dic):
+def output_angles(rval_rot3, nb_poly_max, batchsize, angle_bias=0, angle_scaling=1., **dic):
     rval_output = np.ones((batchsize, nb_poly_max), dtype='float64') * -1
     for j in range(batchsize):
         for i in range(nb_poly_max):
-            rval_output[j, i] = rval_rot3[j, i] + angle_bias
+            rval_output[j, i] = (rval_rot3[j, i] + angle_bias) * angle_scaling
 
     return rval_output
 
