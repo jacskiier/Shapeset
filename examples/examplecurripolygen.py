@@ -16,7 +16,7 @@ m = 1
 genparams = {'inv_chance': 0.5, 'img_shape': (128, 128), 'n_vert_list': [3, 4, 20], 'fg_min': 0.55, 'fg_max': 1.0,
              'bg_min': 0.0, 'bg_max': 0.45, 'rot_min': 0.0, 'rot_max': 1.0, 'pos_min': 0, 'pos_max': 1,
              'scale_min': 0.2, 'scale_max': 0.8, 'rotation_resolution': 255,
-             'nb_poly_max': 2, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 1, 'rejectionmax': 50,
+             'nb_poly_max': 2, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 2, 'rejectionmax': 50,
              'overlap_bool': True}
 
 # genparams2 = {'poly_type' :2,'rot_max' : 1}
@@ -130,12 +130,12 @@ def showresult(it):
         pygame.display.update()
         print('\noutput')
         print (curridata.output[j, :])
-        print('\noutput_as_angles')
-        print (curridata.output_angles)
-        print('\noutput_as_Shapeset3x2_categorical')
-        print (curridata.output_as_Shapeset3x2_categorical)
-        print('\noutput_as_ShapesetMxN_categorical')
-        print (curridata.output_as_ShapesetNxM_categorical)
+        # print('\noutput_as_angles')
+        # print (curridata.output_angles)
+        # print('\noutput_as_Shapeset3x2_categorical')
+        # print (curridata.output_as_Shapeset3x2_categorical)
+        # print('\noutput_as_ShapesetMxN_categorical')
+        # print (curridata.output_as_ShapesetNxM_categorical)
         # raw_input("Please press Enter")
     it += 1
     print (it)
