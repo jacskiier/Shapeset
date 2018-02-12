@@ -614,7 +614,7 @@ def output_angles_xy(rval_rot3, nb_poly_max, batchsize, **dic):
         for i in range(nb_poly_max):
             rval_output[j, i, 0] = np.cos(rval_rot3[j, i])
             rval_output[j, i, 1] = np.sin(rval_rot3[j, i])
-
+    rval_output = np.reshape(rval_output, newshape=(batchsize, nb_poly_max * 2))
     return rval_output
 
 
