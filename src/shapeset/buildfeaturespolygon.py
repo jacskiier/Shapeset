@@ -608,6 +608,16 @@ def output_angles(rval_rot3, nb_poly_max, batchsize, angle_bias=0, angle_scaling
     return rval_output
 
 
+def output_angles_xy(rval_rot3, nb_poly_max, batchsize, **dic):
+    rval_output = np.ones((batchsize, nb_poly_max, 2), dtype='float64') * -1
+    for j in range(batchsize):
+        for i in range(nb_poly_max):
+            rval_output[j, i, 0] = np.cos(rval_rot3[j, i])
+            rval_output[j, i, 1] = np.sin(rval_rot3[j, i])
+
+    return rval_output
+
+
 def output_as_Shapeset3x2_categorical(rval_poly_id, n_vertices, nb_poly_max, batchsize, **dic):
     """the function that uses the data from polygon generator to make outputs (batch_size, num_classes)
 
