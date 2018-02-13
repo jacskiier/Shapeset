@@ -65,9 +65,7 @@ present
             raise ValueError('shape must be seq of 2 ints', img_shape)
 
         def check_range(low, high, name, upper=1.0):
-            if min(low, high) < 0.0 or \
-                    max(low, high) > upper or \
-                    low > high:
+            if (min(low, high) < 0.0 or max(low, high) > upper or low > high) and (low is not None and high is not None and name == 'scale2'):
                 raise ValueError('invalid range', (name, low, high))
 
         check_range(fg_min, fg_max, 'fg')
