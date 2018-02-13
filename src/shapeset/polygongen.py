@@ -48,6 +48,8 @@ present
                  pos_max=0.5,  # max relative translation 0.5 is middle
                  scale_min=0.5,  # min scale (the original scale is 0.5 * the image dimension)
                  scale_max=0.5,  # max scale (the original scale is 0.5 * the image dimension)
+                 scale_min2=None,
+                 scale_max2=None,
                  overlap_bool=True,  # if false no overlap rejection (for too much polygons > too much overlap rejection so
                  # should be put to false), if false objects may be hidden
                  overlap_max=1,  # max overlap between 2 objects (0 to 1)
@@ -73,6 +75,7 @@ present
         check_range(pos_min, pos_max, 'pos')
         check_range(rot_min, rot_max, 'rot')
         check_range(scale_min, scale_max, 'scale')
+        check_range(scale_min2, scale_max2, 'scale2')
         check_range(0, overlap_max, 'overlap')
 
         if int(nb_poly_min) <= 0 or int(nb_poly_min) > int(nb_poly_max) or int(nb_poly_max) > 255:
@@ -120,6 +123,8 @@ present
         self.pos_max = pos_max
         self.scale_min = scale_min
         self.scale_max = scale_max
+        self.scale_min2 = scale_min2
+        self.scale_max2 = scale_max2
         self.rot_max = rot_max
         self.rot_min = rot_min
         self.rotation_resolution = rotation_resolution
@@ -149,6 +154,8 @@ present
 
         scale_min = self.scale_min
         scale_max = self.scale_max
+        scale_min2 = self.scale_min2
+        scale_max2 = self.scale_max2
         pos_min = self.pos_min
         pos_max = self.pos_max
 
@@ -184,7 +191,12 @@ present
                 a = rng.uniform(low=scale_min, high=scale_max, size=1) * img_shape
                 s = np.asarray([a[0], a[0]])
             else:
-                s = rng.uniform(low=scale_min, high=scale_max, size=2) * img_shape
+                if scale_max2 is not None and scale_min2 is not None:
+                    s1 = rng.uniform(low=scale_min, high=scale_max, size=1) * img_shape[0]
+                    s2 = rng.uniform(low=scale_min2, high=scale_max2, size=1) * img_shape[1]
+                    s = np.concatenate([s1, s2])
+                else:
+                    s = rng.uniform(low=scale_min, high=scale_max, size=2) * img_shape
                 if s[1] > s[0]:  # to keep the base in the horizontal direction s[0] must be bigger
                     tmp = s[0]
                     s[0] = s[1]

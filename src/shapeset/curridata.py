@@ -37,7 +37,7 @@ class Curridata(object):
         self.__data = None
         self.__features = [None for _ in range(self.nfeatures)]
 
-        self.gen = datagenerator(**genparams)
+        self.gen = datagenerator(**self.genparams)
         self.genit = self.gen.iterator(batchsize, seed)
 
         self.generatorReturnsBatch = generatorReturnsBatch
