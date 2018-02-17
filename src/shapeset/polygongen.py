@@ -64,16 +64,18 @@ present
         if len(img_shape) != 2:
             raise ValueError('shape must be seq of 2 ints', img_shape)
 
-        def check_range(low, high, name, upper=1.0):
-            if (min(low, high) < 0.0 or max(low, high) > upper or low > high) and (low is not None and high is not None and name == 'scale2'):
+        def check_range(low, high, name, lower=0., upper=1.0, allowNone=False):
+            if low is None and high is None and allowNone is True:
+                return
+            if min(low, high) < lower or max(low, high) > upper or low > high:
                 raise ValueError('invalid range', (name, low, high))
 
         check_range(fg_min, fg_max, 'fg')
         check_range(bg_min, bg_max, 'bg')
         check_range(pos_min, pos_max, 'pos')
-        check_range(rot_min, rot_max, 'rot')
+        check_range(rot_min, rot_max, 'rot', lower=-1.)
         check_range(scale_min, scale_max, 'scale')
-        check_range(scale_min2, scale_max2, 'scale2')
+        check_range(scale_min2, scale_max2, 'scale2', allowNone=True)
         check_range(0, overlap_max, 'overlap')
 
         if int(nb_poly_min) <= 0 or int(nb_poly_min) > int(nb_poly_max) or int(nb_poly_max) > 255:
@@ -220,7 +222,7 @@ present
 
             # sample a translation and keep the entire object in the image
             t = (np.asarray([rng.uniform(low=max(pos_min, -minpts[0]), high=min(pos_max, 1 - maxpts[0])),
-                                rng.uniform(low=max(pos_min, -minpts[1]), high=min(pos_max, 1 - maxpts[1]))])).reshape(2) * img_shape
+                             rng.uniform(low=max(pos_min, -minpts[1]), high=min(pos_max, 1 - maxpts[1]))])).reshape(2) * img_shape
 
             # apply the translation
             points = points + t
