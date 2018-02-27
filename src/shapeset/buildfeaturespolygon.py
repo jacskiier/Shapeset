@@ -60,6 +60,28 @@ def buildimage_4D_noise(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg
 
 # ----------------------------------------------------
 
+def buildimage_5D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, **dic):
+    """ Uses the data from polygon generator to make input features of shape (batch_size, Width, Height, Color)
+
+    """
+    rval_image_flat = buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
+
+    rval_image_out = np.reshape(rval_image_flat, newshape=(batchsize, img_shape[0], img_shape[1]))
+    rval_image_out = rval_image_out[..., None, None]
+    return rval_image_out
+
+
+# ----------------------------------------------------
+
+def buildimage_5D_noise(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, sigma_noise, **dic):
+    rval_image_no_noise = buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
+    noise = np.random.standard_normal(size=rval_image_no_noise.shape) * sigma_noise
+    rval_image_out = rval_image_no_noise + noise
+    return rval_image_out
+
+
+# ----------------------------------------------------
+
 def buildsegmentation(rval_points, rval_nbpol, nb_poly_max, batchsize, img_shape, depthmap, neg, neighbor='V8', **dic):
     if neighbor is 'V4':
         nmult = 2
