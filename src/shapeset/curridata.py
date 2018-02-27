@@ -15,7 +15,10 @@ class Curridata(object):
         :param datagenerator: the class to use as the data generator
         :param genparams: the parameters to give the data generator class on initialization
         :param funclist: the list of feature functions
-        :param dependencies: a list of parameters for each function in funclist
+        :param dependencies: a list of dictionaries that corresponds to funclist.
+            Each dictionary has as a key the parameter name that will be given to the func in funclist.
+            The value is the index of the func in funclist which that parameter will be set to.
+            Allows the arguments of a func in funclist to be the output of some other func in funclist
         :param funcparams: a dictionary of parameters to give all functions in the funclist
         :param batchsize: the size of how many samples to generate at once
         :param seed: the random seed to use when generating samples
