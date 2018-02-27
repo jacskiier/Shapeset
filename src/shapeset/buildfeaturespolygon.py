@@ -29,26 +29,32 @@ def buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg
 
 # ----------------------------------------------------
 
+def buildimage_noise(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, sigma_noise, **dic):
+    rval_image_no_noise = buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
+    noise = np.random.standard_normal(size=rval_image_no_noise.shape) * sigma_noise
+    rval_image_out = rval_image_no_noise + noise
+    return rval_image_out
+
+
+# ----------------------------------------------------
+
 def buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, **dic):
     """ Uses the data from polygon generator to make input features of shape (batch_size, Width, Height, Color)
 
     """
-    surface = pygame.Surface(img_shape, depth=8)
-    surface_ndarray = np.asarray(pygame.surfarray.pixels2d(surface))
-
-    rval_image = np.ndarray((batchsize, img_shape[0], img_shape[1]), dtype='uint8')
-    rval_image_flat = rval_image.reshape(batchsize, img_shape[0] * img_shape[1])
-
-    for j in range(batchsize):
-        surface.fill(int(int(rval_bg[j])))
-
-        for i in range(rval_nbpol[j]):
-            pygame.draw.polygon(surface, int(int(rval_fg[j, i])), rval_points[nb_poly_max * j + i], 0)
-        rval_image[j] = surface_ndarray
-    rval_image_flat = rval_image_flat / 255.0 if not neg else (rval_image_flat / 255.0) * 2 - 1
+    rval_image_flat = buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
 
     rval_image_out = np.reshape(rval_image_flat, newshape=(batchsize, img_shape[0], img_shape[1]))
     rval_image_out = rval_image_out[..., None]
+    return rval_image_out
+
+
+# ----------------------------------------------------
+
+def buildimage_4D_noise(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, sigma_noise, **dic):
+    rval_image_no_noise = buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
+    noise = np.random.standard_normal(size=rval_image_no_noise.shape) * sigma_noise
+    rval_image_out = rval_image_no_noise + noise
     return rval_image_out
 
 
