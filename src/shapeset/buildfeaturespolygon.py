@@ -74,7 +74,7 @@ def buildimage_5D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval
 # ----------------------------------------------------
 
 def buildimage_5D_noise(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, sigma_noise, **dic):
-    rval_image_no_noise = buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
+    rval_image_no_noise = buildimage_5D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
     noise = np.random.standard_normal(size=rval_image_no_noise.shape) * sigma_noise
     rval_image_out = rval_image_no_noise + noise
     return rval_image_out
