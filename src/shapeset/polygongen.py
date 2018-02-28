@@ -324,7 +324,7 @@ present
                         bg.append(rng.randint(int(bg_min1 * 255), 1 + int(bg_max1 * 255)))
                     bg = np.array(bg)
                 else:
-                    bg = rng.randint(int(bg_min * 255), 1 + int(bg_max * 255))
+                    bg = np.tile(rng.randint(int(bg_min * 255), 1 + int(bg_max * 255)), reps=3)
 
 
                 i = 0
@@ -350,7 +350,8 @@ present
                                 fg.append(rng.randint(int(fg_min1 * 255), 1 + int(fg_max1 * 255)))
                             fg = np.array(fg)
                         else:
-                            fg = rng.randint(int(fg_min * 255), 1 + int(fg_max * 255))
+                            fg = np.tile(rng.randint(int(fg_min * 255), 1 + int(fg_max * 255)), reps=3)
+
                         rval_nvert[j, i] = nvert
                         rval_points[nb_poly_max * j + i] = points
                         rval_fg[j, i] = fg
