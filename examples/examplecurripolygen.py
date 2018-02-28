@@ -13,8 +13,8 @@ from shapeset.polygongen import *
 n = 1
 m = 1
 
-genparams = {'inv_chance': 0.5, 'img_shape': (128, 128), 'n_vert_list': [3, 4, 20], 'fg_min': 0.55, 'fg_max': 1.0,
-             'bg_min': 0.0, 'bg_max': 0.45, 'rot_min': 0.0, 'rot_max': 1.0, 'pos_min': 0, 'pos_max': 1,
+genparams = {'inv_chance': 0.5, 'img_shape': (128, 128), 'n_vert_list': [3, 4, 20], 'fg_min': 0.0, 'fg_max': 1.0,
+             'bg_min': (0.0, 0, 0), 'bg_max': (1.0, 1.0, 1.0), 'rot_min': 0.0, 'rot_max': 1.0, 'pos_min': 0, 'pos_max': 1,
              'scale_min': 0.2, 'scale_max': 0.8, 'rotation_resolution': 255,
              'nb_poly_max': 2, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 2, 'rejectionmax': 50,
              'overlap_bool': True}
@@ -25,7 +25,7 @@ datagenerator = Polygongen
 funclist = [buildimage, buildedgesangle, builddepthmap, buildidentity, buildsegmentation, output, buildedgesanglec, output_angles,
             output_as_Shapeset3x2_categorical, output_as_ShapesetNxM_categorical]
 dependencies = [None, {'segmentation': 4}, None, None, {'depthmap': 2}, None, {'segmentation': 4}, None, None, None]
-funcparams = {'neighbor': 'V8', 'gaussfiltbool': False, 'sigma': 0.5, 'size': 5, 'neg': True}
+funcparams = {'neighbor': 'V8', 'gaussfiltbool': False, 'sigma': 0.5, 'size': 5, 'neg': False}
 batchsize = n * m
 seed = 0
 
@@ -52,6 +52,7 @@ pygame.display.init()
 
 screen = pygame.display.set_mode((n * genparams['img_shape'][0] * 2, m * genparams['img_shape'][1] * 6), 0, 8)
 
+anglcolorpalette = screen.get_palette()
 anglcolorpalette = [(0, 0, 0)] + [(0, 0, 255)] + [(0, 255, 0)] + [(255, 0, 0)] + [(255, 255, 0)] + \
                    [(x, x, x) for x in range(5, 256)]
 screen.set_palette(anglcolorpalette)
@@ -66,7 +67,7 @@ def showresult(it):
     batch_data = curridata.next()
 
     xvalid = (np.reshape((curridata.image + 1) * 0.5 * 255,
-                            (batchsize, genparams['img_shape'][0], genparams['img_shape'][1])) / 255.0 * 250 + 5)
+                            (batchsize, genparams['img_shape'][0], genparams['img_shape'][1], 3)) / 255.0 * 250 + 5)
     yvalid = np.reshape((curridata.edges + 1) * 0.5, (batchsize, 4, genparams['img_shape'][0], genparams['img_shape'][1]))
     zvalid = (np.reshape((curridata.depth + 1) * 0.5 * 255,
                             (batchsize, genparams['img_shape'][0], genparams['img_shape'][1])) / 255.0 * 250 + 5)
@@ -83,7 +84,7 @@ def showresult(it):
         print(xi, yi)
 
         new = pygame.surfarray.make_surface(xvalid[j, :, :])
-        new.set_palette(anglcolorpalette)
+        # new.set_palette(anglcolorpalette)
         screen.blit(new, (xi, yi))
 
         ytmp = (yvalid[j, 2, :, :] * yvalid[j, 3, :, :]) * 4 + (yvalid[j, 0, :, :] * yvalid[j, 3, :, :]) * 1 + (

@@ -67,8 +67,22 @@ present
         def check_range(low, high, name, lower=0., upper=1.0, allowNone=False):
             if low is None and high is None and allowNone is True:
                 return
-            if min(low, high) < lower or max(low, high) > upper or low > high:
-                raise ValueError('invalid range', (name, low, high))
+            assert (isinstance(low, tuple) or isinstance(low, list)) == \
+                   isinstance(high, tuple) or isinstance(high, list), "{0} must both be lists or not".format(name)
+
+            if isinstance(low, tuple) or isinstance(low, list):
+                lows = low
+            else:
+                lows = (low,)
+
+            if isinstance(high, tuple) or isinstance(high, list):
+                highs = high
+            else:
+                highs = (high,)
+
+            for low, high in zip(lows, highs):
+                if min(low, high) < lower or max(low, high) > upper or low > high:
+                    raise ValueError('invalid range', (name, low, high))
 
         check_range(fg_min, fg_max, 'fg')
         check_range(bg_min, bg_max, 'bg')
@@ -286,8 +300,8 @@ present
                 rval_seed = np.ndarray((batchsize, nb_poly_max,), dtype='int32')
                 rval_nbpol = np.ndarray(batchsize, dtype='int8')
                 rval_points = [None] * batchsize * nb_poly_max
-                rval_fg = np.ndarray((batchsize, nb_poly_max), dtype='uint8')
-                rval_bg = np.ndarray(batchsize, dtype='uint8')
+                rval_fg = np.ndarray((batchsize, nb_poly_max, 3), dtype='uint8')
+                rval_bg = np.ndarray((batchsize, 3), dtype='uint8')
 
             # here we init the return value that need to be initialize at all iteration
             rval_poly_id = -1 * np.ones((batchsize, nb_poly_max,), dtype='int8')
@@ -304,7 +318,14 @@ present
                 # pick a number of polygons
                 nbpol = int(rng.randint(self.nb_poly_min, 1 + nb_poly_max))
                 # pick a background color
-                bg = int(rng.randint(int(bg_min * 255), 1 + int(bg_max * 255)))
+                if isinstance(bg_min, tuple) or isinstance(bg_max, list):
+                    bg = []
+                    for bg_min1, bg_max1 in zip(bg_min, bg_max):
+                        bg.append(rng.randint(int(bg_min1 * 255), 1 + int(bg_max1 * 255)))
+                    bg = np.array(bg)
+                else:
+                    bg = rng.randint(int(bg_min * 255), 1 + int(bg_max * 255))
+
 
                 i = 0
                 while i < nbpol:  # for each polygon of the image
@@ -323,7 +344,13 @@ present
                         print('Too many rejections : stop polygon sampling')
                         nbpol = i
                     else:  # else save the sampled polygon in the output list
-                        fg = int(rng.randint(int(fg_min * 255), 1 + int(fg_max * 255)))
+                        if isinstance(fg_min, tuple) or isinstance(fg_max, list):
+                            fg = []
+                            for fg_min1, fg_max1 in zip(fg_min, fg_max):
+                                fg.append(rng.randint(int(fg_min1 * 255), 1 + int(fg_max1 * 255)))
+                            fg = np.array(fg)
+                        else:
+                            fg = rng.randint(int(fg_min * 255), 1 + int(fg_max * 255))
                         rval_nvert[j, i] = nvert
                         rval_points[nb_poly_max * j + i] = points
                         rval_fg[j, i] = fg
