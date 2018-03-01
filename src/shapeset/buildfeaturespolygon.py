@@ -52,11 +52,12 @@ def gaussian_weight_batches(size_x, size_y, mu_x, mu_y, sigma_x=1., sigma_y=None
     return g / max(np.abs(np.max(g)), np.abs(np.min(g)))
 
 
-def corrupt_images(images, sigma_factor=(1.0, 1.0)):
+def corrupt_images(images, sigma_noise=1.0, sigma_factor=(1.0, 1.0)):
     """ adds noise weighted by a gaussian then applys a bayer filter to image
 
     :param images: the images to corrupt shaped by (batchers, width, height, channels)
     :param sigma_factor: larger sigma factor will make more spread in the weighting of the gaussian. sigma_factor=1 makes std be imgage width/height
+    :param sigma_noise: the noise strength
     :return:
     """
     if isinstance(sigma_factor, list) or isinstance(sigma_factor, tuple):
@@ -68,7 +69,7 @@ def corrupt_images(images, sigma_factor=(1.0, 1.0)):
     width = images.shape[1]
     height = images.shape[2]
     # get noise
-    noise = np.random.standard_normal(images.shape)
+    noise = np.random.standard_normal(images.shape) * sigma_noise
     # make weights for noise
     mu_x = np.random.randint(0, width, size=(samples,))
     mu_y = np.random.randint(0, height, size=(samples,))
@@ -91,11 +92,11 @@ def corrupt_images(images, sigma_factor=(1.0, 1.0)):
 # -------------------------------------------------
 def buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, **dic):
     if len(img_shape) >= 3 and img_shape[2] > 1:
-        depth = 32
+        surface = pygame.Surface(img_shape[:2], depth=32)
+        surface_ndarray = np.asarray(pygame.surfarray.pixels3d(surface))
     else:
-        depth = 8
-    surface = pygame.Surface(img_shape[:2], depth=depth)
-    surface_ndarray = np.asarray(pygame.surfarray.pixels3d(surface))
+        surface = pygame.Surface(img_shape[:2], depth=8)
+        surface_ndarray = np.asarray(pygame.surfarray.pixels2d(surface))
 
     rval_image = np.ndarray((batchsize,) + tuple(img_shape.tolist()), dtype='uint8')
     rval_image_flat = rval_image.reshape(batchsize, np.prod(img_shape))
@@ -105,7 +106,7 @@ def buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg
 
         for i in range(rval_nbpol[j]):
             pygame.draw.polygon(surface, rval_fg[j, i], rval_points[nb_poly_max * j + i], 0)
-        rval_image[j] = surface_ndarray
+        rval_image[j] = np.reshape(surface_ndarray, tuple(img_shape.tolist()))
     return rval_image_flat / 255.0 if not neg else (rval_image_flat / 255.0) * 2 - 1
 
 
@@ -127,7 +128,7 @@ def buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval
 
     """
     rval_image_flat = buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
-    rval_image_out = np.reshape(rval_image_flat, newshape=(batchsize, img_shape[0], img_shape[1], 3))
+    rval_image_out = np.reshape(rval_image_flat, newshape=(batchsize,) + tuple(img_shape.tolist()))
     if rval_image_out.ndim < 4:
         rval_image_out = rval_image_out[..., None]
     return rval_image_out
@@ -153,9 +154,9 @@ def buildimage_4D_noise_bayer_patch(rval_points, rval_nbpol, nb_poly_max, batchs
     return rval_image_out
 
 
-def buildimage_4D_corrupt(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, sigma_factor, **dic):
+def buildimage_4D_corrupt(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, sigma_factor, sigma_noise, **dic):
     rval_image_out = buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
-    rval_image_out = corrupt_images(rval_image_out, sigma_factor=sigma_factor)
+    rval_image_out = corrupt_images(rval_image_out,sigma_noise=sigma_noise, sigma_factor=sigma_factor)
     return rval_image_out
 
 
@@ -167,7 +168,7 @@ def buildimage_5D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval
     """
     rval_image_flat = buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
 
-    rval_image_out = np.reshape(rval_image_flat, newshape=(batchsize, img_shape[0], img_shape[1]))
+    rval_image_out = np.reshape(rval_image_flat, newshape=(batchsize,) + tuple(img_shape.tolist()))
     rval_image_out = rval_image_out[..., None, None]
     return rval_image_out
 

@@ -25,7 +25,7 @@ datagenerator = Polygongen
 funclist = [buildimage, buildedgesangle, builddepthmap, buildidentity, buildsegmentation, output, buildedgesanglec, output_angles,
             output_as_Shapeset3x2_categorical, output_as_ShapesetNxM_categorical, buildimage_4D_corrupt]
 dependencies = [None, {'segmentation': 4}, None, None, {'depthmap': 2}, None, {'segmentation': 4}, None, None, None, None]
-funcparams = {'neighbor': 'V8', 'gaussfiltbool': False, 'sigma': 0.5, 'size': 5, 'neg': False, 'sigma_noise': 0.1, 'sigma_factor': 0.25}
+funcparams = {'neighbor': 'V8', 'gaussfiltbool': False, 'sigma': 0.5, 'size': 5, 'neg': False, 'sigma_noise': 0.3, 'sigma_factor': 0.3}
 batchsize = n * m
 seed = 0
 
@@ -51,13 +51,13 @@ Curridata.buildimage_4D_corrupt = property(functools.partial(Curridata.getter, i
 
 pygame.display.init()
 
-screen = pygame.display.set_mode((n * genparams['img_shape'][0] * 2, m * genparams['img_shape'][1] * 6), 0, 32)
-
-if len(genparams['img_shape']) <= 2:
-    anglcolorpalette = screen.get_palette()
+if len(genparams['img_shape']) <= 2 or genparams['img_shape'][2] == 1:
+    screen = pygame.display.set_mode((n * genparams['img_shape'][0] * 2, m * genparams['img_shape'][1] * 6), 0, 8)
     anglcolorpalette = [(0, 0, 0)] + [(0, 0, 255)] + [(0, 255, 0)] + [(255, 0, 0)] + [(255, 255, 0)] + \
                        [(x, x, x) for x in range(5, 256)]
     screen.set_palette(anglcolorpalette)
+else:
+    screen = pygame.display.set_mode((n * genparams['img_shape'][0] * 2, m * genparams['img_shape'][1] * 6), 0, 32)
 
 iteration = 0
 nmult = 4
@@ -80,7 +80,9 @@ def showresult(it):
         yi = (j - (j / m) * m) * genparams['img_shape'][1] * 6
         print(xi, yi)
 
-        new = pygame.surfarray.make_surface(xvalid[j, :, :, :])
+        if xvalid.ndim == 4 and xvalid.shape[3] == 1:
+            xvalid = np.squeeze(xvalid, -1)
+        new = pygame.surfarray.make_surface(xvalid[j, ...])
         # new.set_palette(anglcolorpalette)
         screen.blit(new, (xi, yi))
 
