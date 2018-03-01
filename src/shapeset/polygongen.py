@@ -277,6 +277,23 @@ present
             break  # if we are here > polygon is good we can return it
         return points, self.rot_rads[rot_idx1], self.rot_rads[rot_idx3], s, t, nbrejection
 
+    @staticmethod
+    def get_color(col_min, col_max, img_shape, rng):
+        if len(img_shape) >= 3 and img_shape[2] > 1:
+            if isinstance(col_min, tuple) or isinstance(col_max, list):
+                col = []
+                for bg_min1, bg_max1 in zip(col_min, col_max):
+                    col.append(rng.randint(int(bg_min1 * 255), 1 + int(bg_max1 * 255)))
+                col = np.array(col)
+            else:
+                col = np.tile(rng.randint(int(col_min * 255), 1 + int(col_max * 255)), reps=3)
+        else:
+            if isinstance(col_min, tuple) or isinstance(col_max, list):
+                col = rng.randint(int(col_min[0] * 255), 1 + int(col_max[0] * 255))
+            else:
+                col = rng.randint(int(col_min * 255), 1 + int(col_max * 255))
+        return col
+
     def iterator(self, batchsize, seed=0):
 
         nb_poly_max = None
@@ -318,14 +335,7 @@ present
                 # pick a number of polygons
                 nbpol = int(rng.randint(self.nb_poly_min, 1 + nb_poly_max))
                 # pick a background color
-                if isinstance(bg_min, tuple) or isinstance(bg_max, list):
-                    bg = []
-                    for bg_min1, bg_max1 in zip(bg_min, bg_max):
-                        bg.append(rng.randint(int(bg_min1 * 255), 1 + int(bg_max1 * 255)))
-                    bg = np.array(bg)
-                else:
-                    bg = np.tile(rng.randint(int(bg_min * 255), 1 + int(bg_max * 255)), reps=3)
-
+                bg = Polygongen.get_color(bg_min, bg_max, self.img_shape, rng)
 
                 i = 0
                 while i < nbpol:  # for each polygon of the image
@@ -344,13 +354,7 @@ present
                         print('Too many rejections : stop polygon sampling')
                         nbpol = i
                     else:  # else save the sampled polygon in the output list
-                        if isinstance(fg_min, tuple) or isinstance(fg_max, list):
-                            fg = []
-                            for fg_min1, fg_max1 in zip(fg_min, fg_max):
-                                fg.append(rng.randint(int(fg_min1 * 255), 1 + int(fg_max1 * 255)))
-                            fg = np.array(fg)
-                        else:
-                            fg = np.tile(rng.randint(int(fg_min * 255), 1 + int(fg_max * 255)), reps=3)
+                        fg = Polygongen.get_color(fg_min, fg_max, self.img_shape, rng)
 
                         rval_nvert[j, i] = nvert
                         rval_points[nb_poly_max * j + i] = points

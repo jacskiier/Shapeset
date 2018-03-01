@@ -53,10 +53,11 @@ pygame.display.init()
 
 screen = pygame.display.set_mode((n * genparams['img_shape'][0] * 2, m * genparams['img_shape'][1] * 6), 0, 32)
 
-# anglcolorpalette = screen.get_palette()
-# anglcolorpalette = [(0, 0, 0)] + [(0, 0, 255)] + [(0, 255, 0)] + [(255, 0, 0)] + [(255, 255, 0)] + \
-#                    [(x, x, x) for x in range(5, 256)]
-# screen.set_palette(anglcolorpalette)
+if len(genparams['img_shape']) <= 2:
+    anglcolorpalette = screen.get_palette()
+    anglcolorpalette = [(0, 0, 0)] + [(0, 0, 255)] + [(0, 255, 0)] + [(255, 0, 0)] + [(255, 255, 0)] + \
+                       [(x, x, x) for x in range(5, 256)]
+    screen.set_palette(anglcolorpalette)
 
 iteration = 0
 nmult = 4

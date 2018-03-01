@@ -48,8 +48,9 @@ def gaussian_weight_batches(size_x, size_y, mu_x, mu_y, sigma_x=1., sigma_y=None
     if not sigma_y:
         sigma_y = sigma_x
     x, y = np.mgrid[-size_x / 2 + 0.5:size_x / 2 + 0.5:1., -size_y / 2 + 0.5:size_y / 2 + 0.5:1.]
-    g = np.exp(-0.5 * (((x[None] - mu_x[:,None,None]) / sigma_x) ** 2 + ((y[None] - mu_y[:,None,None]) / sigma_y) ** 2))
+    g = np.exp(-0.5 * (((x[None] - mu_x[:, None, None]) / sigma_x) ** 2 + ((y[None] - mu_y[:, None, None]) / sigma_y) ** 2))
     return g / max(np.abs(np.max(g)), np.abs(np.min(g)))
+
 
 def corrupt_images(images, sigma_factor=(1.0, 1.0)):
     """ adds noise weighted by a gaussian then applys a bayer filter to image
@@ -89,11 +90,15 @@ def corrupt_images(images, sigma_factor=(1.0, 1.0)):
 
 # -------------------------------------------------
 def buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, **dic):
-    surface = pygame.Surface(img_shape[:2], depth=32)
+    if len(img_shape) >= 3 and img_shape[2] > 1:
+        depth = 32
+    else:
+        depth = 8
+    surface = pygame.Surface(img_shape[:2], depth=depth)
     surface_ndarray = np.asarray(pygame.surfarray.pixels3d(surface))
 
-    rval_image = np.ndarray((batchsize, img_shape[0], img_shape[1], 3), dtype='uint8')
-    rval_image_flat = rval_image.reshape(batchsize, img_shape[0] * img_shape[1] * 3)
+    rval_image = np.ndarray((batchsize,) + tuple(img_shape.tolist()), dtype='uint8')
+    rval_image_flat = rval_image.reshape(batchsize, np.prod(img_shape))
 
     for j in range(batchsize):
         surface.fill(rval_bg[j])
@@ -152,6 +157,7 @@ def buildimage_4D_corrupt(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_
     rval_image_out = buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
     rval_image_out = corrupt_images(rval_image_out, sigma_factor=sigma_factor)
     return rval_image_out
+
 
 # ----------------------------------------------------
 
