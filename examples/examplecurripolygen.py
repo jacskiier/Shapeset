@@ -13,10 +13,10 @@ from shapeset.polygongen import *
 n = 1
 m = 1
 
-genparams = {'inv_chance': 0.5, 'img_shape': (128, 128), 'n_vert_list': [3, 4, 20], 'fg_min': (0.55,) * 3, 'fg_max': (1.0,) * 3,
+genparams = {'inv_chance': 0.5, 'img_shape': (128, 128, 3), 'n_vert_list': [3, 4, 20], 'fg_min': (0.55,) * 3, 'fg_max': (1.0,) * 3,
              'bg_min': (0.0,) * 3, 'bg_max': (0.45,) * 3, 'rot_min': 0.0, 'rot_max': 1.0, 'pos_min': 0, 'pos_max': 1,
              'scale_min': 0.2, 'scale_max': 0.8, 'rotation_resolution': 255,
-             'nb_poly_max': 2, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 2, 'rejectionmax': 50,
+             'nb_poly_max': 10, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 2, 'rejectionmax': 50,
              'overlap_bool': True}
 
 # genparams2 = {'poly_type' :2,'rot_max' : 1}
@@ -67,13 +67,12 @@ if funcparams['neighbor'] is 'V4':
 def showresult(it):
     batch_data = curridata.next()
 
-    img_shape = (batchsize,) + genparams['img_shape'] + (3,)
-    xvalid = np.reshape(curridata.buildimage_4D_corrupt, newshape=img_shape) * 255.0
-    yvalid = np.reshape(curridata.edges, (batchsize, 4) + genparams['img_shape']) * 255.0
-    zvalid = np.reshape(curridata.depth, (batchsize,) + genparams['img_shape']) * 255.0
-    wvalid = np.reshape(curridata.identity, (batchsize, len(genparams['n_vert_list'])) + genparams['img_shape']) * 255.0
+    xvalid = np.reshape(curridata.buildimage_4D_corrupt, newshape=(batchsize,) + genparams['img_shape']) * 255.0
+    yvalid = np.reshape(curridata.edges, (batchsize, 4) + genparams['img_shape'][:2]) * 255.0
+    zvalid = np.reshape(curridata.depth, (batchsize,) + genparams['img_shape'][:2]) * 255.0
+    wvalid = np.reshape(curridata.identity, (batchsize, len(genparams['n_vert_list'])) + genparams['img_shape'][:2]) * 255.0
     svalid = np.reshape(curridata.segmentation, (batchsize, genparams['img_shape'][0] * nmult, genparams['img_shape'][1]))
-    tvalid = np.reshape(curridata.edgesc, (batchsize, 4) + genparams['img_shape']) * 255.0
+    tvalid = np.reshape(curridata.edgesc, (batchsize, 4) + genparams['img_shape'][:2]) * 255.0
 
     for j in range(batchsize):
         xi = (j / m) * genparams['img_shape'][0] * 2

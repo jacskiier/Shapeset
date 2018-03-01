@@ -89,7 +89,7 @@ def corrupt_images(images, sigma_factor=(1.0, 1.0)):
 
 # -------------------------------------------------
 def buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, **dic):
-    surface = pygame.Surface(img_shape, depth=32)
+    surface = pygame.Surface(img_shape[:2], depth=32)
     surface_ndarray = np.asarray(pygame.surfarray.pixels3d(surface))
 
     rval_image = np.ndarray((batchsize, img_shape[0], img_shape[1], 3), dtype='uint8')
@@ -217,7 +217,7 @@ def buildsegmentation(rval_points, rval_nbpol, nb_poly_max, batchsize, img_shape
 # --------------------------------------------------------
 
 def buildidentity(rval_points, rval_nbpol, nb_poly_max, rval_poly_id, n_vertices, batchsize, img_shape, neg, **dic):
-    surfaceidentity = pygame.Surface(img_shape, depth=8)
+    surfaceidentity = pygame.Surface(img_shape[:2], depth=8)
     surfaceidentity_ndarray = np.asarray(pygame.surfarray.pixels2d(surfaceidentity))
 
     rval_identity = np.ndarray((batchsize, len(n_vertices), img_shape[0], img_shape[1]), dtype='bool')
@@ -236,7 +236,7 @@ def buildidentity(rval_points, rval_nbpol, nb_poly_max, rval_poly_id, n_vertices
 # ---------------------------------------------------------
 
 def builddepthmap(rval_points, rval_nbpol, nb_poly_max, batchsize, img_shape, neg, **dic):
-    surfacedepth = pygame.Surface(img_shape, depth=8)
+    surfacedepth = pygame.Surface(img_shape[:2], depth=8)
     surfacedepth_ndarray = np.asarray(pygame.surfarray.pixels2d(surfacedepth))
 
     rval_depth = np.ndarray((batchsize, img_shape[0], img_shape[1]), dtype='uint8')
@@ -313,7 +313,7 @@ def buildedges(rval_points, rval_nbpol, nb_poly_max, batchsize, img_shape, segme
 # ----------------------------------------------------------
 
 def buildedgesangle(rval_points, rval_nbpol, nb_poly_max, batchsize, img_shape, segmentation, neg, **dic):
-    surfaceedges = pygame.Surface(img_shape, depth=8)
+    surfaceedges = pygame.Surface(img_shape[:2], depth=8)
     surfaceedges_ndarray = np.asarray(pygame.surfarray.pixels2d(surfaceedges))
 
     if segmentation.size == img_shape[0] * img_shape[1] * 2:
@@ -626,7 +626,7 @@ def buildidentityc(rval_points, rval_nbpol, nb_poly_max, rval_poly_id, n_vertice
 # ----------------------------------------------------------
 
 def buildedgesanglec(rval_points, rval_nbpol, nb_poly_max, batchsize, img_shape, segmentation, neg, **dic):
-    surfaceedges = pygame.Surface(img_shape, depth=8)
+    surfaceedges = pygame.Surface(img_shape[:2], depth=8)
     surfaceedges_ndarray = np.asarray(pygame.surfarray.pixels2d(surfaceedges))
 
     if segmentation.size == img_shape[0] * img_shape[1] * 2:

@@ -61,8 +61,8 @@ present
                  ):
 
         # -------------- Parameter validation
-        if len(img_shape) != 2:
-            raise ValueError('shape must be seq of 2 ints', img_shape)
+        if not (len(img_shape) == 2 or len(img_shape) == 3):
+            raise ValueError('shape must be seq of 2 ints or 3ints', img_shape)
 
         def check_range(low, high, name, lower=0., upper=1.0, allowNone=False):
             if low is None and high is None and allowNone is True:
@@ -202,7 +202,7 @@ present
         while True:  # for the rejection
 
             if poly_type < 1:  # if we want regular polygon the deformation should be the same on both axis
-                a = rng.uniform(low=scale_min, high=scale_max, size=1) * img_shape
+                a = rng.uniform(low=scale_min, high=scale_max, size=1) * img_shape[:2]
                 s = np.asarray([a[0], a[0]])
             else:
                 if scale_max2 is not None and scale_min2 is not None:
@@ -210,7 +210,7 @@ present
                     s2 = rng.uniform(low=scale_min2, high=scale_max2, size=1) * img_shape[1]
                     s = np.concatenate([s1, s2])
                 else:
-                    s = rng.uniform(low=scale_min, high=scale_max, size=2) * img_shape
+                    s = rng.uniform(low=scale_min, high=scale_max, size=2) * img_shape[:2]
                 if s[1] > s[0]:  # to keep the base in the horizontal direction s[0] must be bigger
                     tmp = s[0]
                     s[0] = s[1]
@@ -231,12 +231,12 @@ present
             points = np.dot(np.dot(np.dot(points_orig, r1) * s, r2), r3)  # the order is important
 
             # find the max-min box of the vertices position
-            maxpts = (points.max(0) + 1) / img_shape  # +1 because the shapes shouldn't touch the border of the image
-            minpts = (points.min(0) - 1) / img_shape  # -1 because the shapes shouldn't touch the border of the image
+            maxpts = (points.max(0) + 1) / img_shape[:2]  # +1 because the shapes shouldn't touch the border of the image
+            minpts = (points.min(0) - 1) / img_shape[:2]  # -1 because the shapes shouldn't touch the border of the image
 
             # sample a translation and keep the entire object in the image
             t = (np.asarray([rng.uniform(low=max(pos_min, -minpts[0]), high=min(pos_max, 1 - maxpts[0])),
-                             rng.uniform(low=max(pos_min, -minpts[1]), high=min(pos_max, 1 - maxpts[1]))])).reshape(2) * img_shape
+                             rng.uniform(low=max(pos_min, -minpts[1]), high=min(pos_max, 1 - maxpts[1]))])).reshape(2) * img_shape[:2]
 
             # apply the translation
             points = points + t
