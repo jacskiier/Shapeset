@@ -22,9 +22,12 @@ genparams = {'inv_chance': 0.5, 'img_shape': (128, 128, 3), 'n_vert_list': [3, 4
 # genparams2 = {'poly_type' :2,'rot_max' : 1}
 
 datagenerator = Polygongen
-funclist = [buildimage, buildedgesangle, builddepthmap, buildidentity, buildsegmentation, output, buildedgesanglec, output_angles,
-            output_as_Shapeset3x2_categorical, output_as_ShapesetNxM_categorical, buildimage_4D_corrupt]
-dependencies = [None, {'segmentation': 4}, None, None, {'depthmap': 2}, None, {'segmentation': 4}, None, None, None, None]
+funclist = [buildimage, buildedgesangle, builddepthmap, buildidentity, buildsegmentation,
+            output, buildedgesanglec, output_angles, output_as_Shapeset3x2_categorical, output_as_ShapesetNxM_categorical,
+            buildimage_4D, buildimage_add_noise_blob, buildimage_filter_bayer_patch]
+dependencies = [None, {'segmentation': 4}, None, None, {'depthmap': 2},
+                None, {'segmentation': 4}, None, None, None,
+                None, {'rval_image': 0}, {'rval_image': 11}]
 funcparams = {'neighbor': 'V8', 'gaussfiltbool': False, 'sigma': 0.5, 'size': 5, 'neg': False, 'sigma_noise': 0.3, 'sigma_factor': 0.3}
 batchsize = n * m
 seed = 0
@@ -42,7 +45,9 @@ Curridata.edgesc = property(functools.partial(Curridata.getter, i=6))
 Curridata.output_angles = property(functools.partial(Curridata.getter, i=7))
 Curridata.output_as_Shapeset3x2_categorical = property(functools.partial(Curridata.getter, i=8))
 Curridata.output_as_ShapesetNxM_categorical = property(functools.partial(Curridata.getter, i=9))
-Curridata.buildimage_4D_corrupt = property(functools.partial(Curridata.getter, i=10))
+Curridata.buildimage_4D = property(functools.partial(Curridata.getter, i=10))
+Curridata.buildimage_add_noise_blob = property(functools.partial(Curridata.getter, i=11))
+Curridata.buildimage_filter_bayer_patch = property(functools.partial(Curridata.getter, i=12))
 # curridata.changegenparam(genparams2)
 
 # ------------------------------------------------------------------------------------------------
@@ -68,7 +73,7 @@ if funcparams['neighbor'] is 'V4':
 def showresult(it):
     batch_data = curridata.next()
 
-    xvalid = np.reshape(curridata.buildimage_4D_corrupt, newshape=(batchsize,) + genparams['img_shape']) * 255.0
+    xvalid = np.reshape(curridata.buildimage_filter_bayer_patch, newshape=(batchsize,) + genparams['img_shape']) * 255.0
     yvalid = np.reshape(curridata.edges, (batchsize, 4) + genparams['img_shape'][:2]) * 255.0
     zvalid = np.reshape(curridata.depth, (batchsize,) + genparams['img_shape'][:2]) * 255.0
     wvalid = np.reshape(curridata.identity, (batchsize, len(genparams['n_vert_list'])) + genparams['img_shape'][:2]) * 255.0

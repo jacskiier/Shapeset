@@ -52,35 +52,46 @@ def gaussian_weight_batches(size_x, size_y, mu_x, mu_y, sigma_x=1., sigma_y=None
     return g / max(np.abs(np.max(g)), np.abs(np.min(g)))
 
 
-def corrupt_images(images, sigma_noise=1.0, sigma_factor=(1.0, 1.0)):
-    """ adds noise weighted by a gaussian then applys a bayer filter to image
+def get_weighted_noise_blob(images_shape, sigma_noise=1.0, sigma_factor=(1.0, 1.0)):
+    """ makes a weighted noise blob to add to an image
 
-    :param images: the images to corrupt shaped by (batchers, width, height, channels)
+    :param images_shape the shapes of the images the blobs will be made for
     :param sigma_factor: larger sigma factor will make more spread in the weighting of the gaussian. sigma_factor=1 makes std be imgage width/height
     :param sigma_noise: the noise strength
-    :return:
+    :return: images with weighted noise blob added and filtered with bayer patch
     """
     if isinstance(sigma_factor, list) or isinstance(sigma_factor, tuple):
         if len(sigma_factor) < 2:
             sigma_factor = sigma_factor + sigma_factor
     else:
         sigma_factor = (sigma_factor, sigma_factor)
-    samples = images.shape[0]
-    width = images.shape[1]
-    height = images.shape[2]
+    samples = images_shape[0]
+    width = images_shape[1]
+    height = images_shape[2]
     # get noise
-    noise = np.random.standard_normal(images.shape) * sigma_noise
+    noise = np.random.standard_normal(images_shape) * sigma_noise
     # make weights for noise
     mu_x = np.random.randint(0, width, size=(samples,))
     mu_y = np.random.randint(0, height, size=(samples,))
     gw = gaussian_weight_batches(width, height, mu_x, mu_y, width * sigma_factor[0], height * sigma_factor[1])
     # apply weighting to noise
     weighted_noise = noise * gw[..., None]
+    return weighted_noise
+
+
+def corrupt_images(images, sigma_noise=1.0, sigma_factor=(1.0, 1.0)):
+    """ adds noise weighted by a gaussian then applys a bayer filter to image
+
+    :param images: the images to corrupt shaped by (batchers, width, height, channels)
+    :param sigma_factor: larger sigma factor will make more spread in the weighting of the gaussian. sigma_factor=1 makes std be imgage width/height
+    :param sigma_noise: the noise strength
+    :return: images with weighted noise blob added and filtered with bayer patch
+    """
+    weighted_noise = get_weighted_noise_blob(images.shape, sigma_noise, sigma_factor)
     # apply weighted noise to image
     images = images + weighted_noise
     # remove parts that went out of bounds
-    images[images < 0] = 0
-    images[images > 1] = 1
+    images = np.clip(images, 0, 1)
     # get bayer patch
     bayer_patch2 = make_bayer_patch(images.shape[1:])
     # apply bayer patch to image
@@ -89,7 +100,6 @@ def corrupt_images(images, sigma_noise=1.0, sigma_factor=(1.0, 1.0)):
     return images
 
 
-# -------------------------------------------------
 def buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, **dic):
     if len(img_shape) >= 3 and img_shape[2] > 1:
         surface = pygame.Surface(img_shape[:2], depth=32)
@@ -110,7 +120,40 @@ def buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg
     return rval_image_flat / 255.0 if not neg else (rval_image_flat / 255.0) * 2 - 1
 
 
-# ----------------------------------------------------
+def buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, **dic):
+    """ Uses the data from polygon generator to make input features of shape (batch_size, Width, Height, Color)
+
+    """
+    rval_image_flat = buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
+    rval_image_out = np.reshape(rval_image_flat, newshape=(batchsize,) + tuple(img_shape.tolist()))
+    while rval_image_out.ndim < 4:
+        rval_image_out = rval_image_out[..., None]
+    return rval_image_out
+
+
+def buildimage_add_noise(rval_image, sigma_noise, **dic):
+    noise = np.random.standard_normal(size=rval_image.shape) * sigma_noise
+    rval_image_out = rval_image + noise
+    rval_image_out = np.clip(rval_image_out, 0, 1)
+    return rval_image_out
+
+
+def buildimage_add_noise_blob(rval_image, batchsize, img_shape, sigma_noise, sigma_factor, **dic):
+    batch_img_shape = (batchsize,) + tuple(img_shape.tolist())
+    weighted_noise_blob = get_weighted_noise_blob(batch_img_shape, sigma_noise, sigma_factor)
+    rval_image_out = np.reshape(rval_image, batch_img_shape) + weighted_noise_blob
+    rval_image_out = np.reshape(rval_image_out, rval_image.shape)
+    rval_image_out = np.clip(rval_image_out, 0, 1)
+    return rval_image_out
+
+
+def buildimage_filter_bayer_patch(rval_image, batchsize, img_shape, **dic):
+    batch_img_shape = (batchsize,) + tuple(img_shape.tolist())
+    bayer_patch = make_bayer_patch(tuple(img_shape.tolist()))
+    rval_image_out = np.reshape(rval_image, batch_img_shape) * bayer_patch
+    rval_image_out = np.reshape(rval_image_out, rval_image.shape)
+    return rval_image_out
+
 
 def buildimage_noise(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, sigma_noise, **dic):
     rval_image_no_noise = buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
@@ -121,66 +164,9 @@ def buildimage_noise(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, r
     return rval_image_out
 
 
-# ----------------------------------------------------
-
-def buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, **dic):
-    """ Uses the data from polygon generator to make input features of shape (batch_size, Width, Height, Color)
-
-    """
-    rval_image_flat = buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
-    rval_image_out = np.reshape(rval_image_flat, newshape=(batchsize,) + tuple(img_shape.tolist()))
-    if rval_image_out.ndim < 4:
-        rval_image_out = rval_image_out[..., None]
-    return rval_image_out
-
-
-# ----------------------------------------------------
-
-def buildimage_4D_noise(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, sigma_noise, **dic):
-    rval_image_no_noise = buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
-    noise = np.random.standard_normal(size=rval_image_no_noise.shape) * sigma_noise
-    rval_image_out = rval_image_no_noise + noise
-    rval_image_out[rval_image_out < 0.] = 0.
-    rval_image_out[rval_image_out > 1.] = 1.
-    return rval_image_out
-
-
-# ----------------------------------------------------
-
-def buildimage_4D_noise_bayer_patch(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, sigma_noise, **dic):
-    rval_image_out = buildimage_4D_noise(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, sigma_noise)
-    bayer_patch = make_bayer_patch(rval_image_out.shape[1:])
-    rval_image_out *= bayer_patch
-    return rval_image_out
-
-
 def buildimage_4D_corrupt(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, sigma_factor, sigma_noise, **dic):
     rval_image_out = buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
     rval_image_out = corrupt_images(rval_image_out, sigma_noise=sigma_noise, sigma_factor=sigma_factor)
-    return rval_image_out
-
-
-# ----------------------------------------------------
-
-def buildimage_5D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, **dic):
-    """ Uses the data from polygon generator to make input features of shape (batch_size, Width, Height, Color)
-
-    """
-    rval_image_flat = buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
-
-    rval_image_out = np.reshape(rval_image_flat, newshape=(batchsize,) + tuple(img_shape.tolist()))
-    rval_image_out = rval_image_out[..., None, None]
-    return rval_image_out
-
-
-# ----------------------------------------------------
-
-def buildimage_5D_noise(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, sigma_noise, **dic):
-    rval_image_no_noise = buildimage_5D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
-    noise = np.random.standard_normal(size=rval_image_no_noise.shape) * sigma_noise
-    rval_image_out = rval_image_no_noise + noise
-    rval_image_out[rval_image_out < 0.] = 0.
-    rval_image_out[rval_image_out > 1.] = 1.
     return rval_image_out
 
 
