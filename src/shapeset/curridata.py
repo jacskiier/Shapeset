@@ -19,7 +19,7 @@ class Curridata(object):
             Each dictionary has as a key the parameter name that will be given to the func in funclist.
             The value is the index of the func in funclist which that parameter will be set to.
             Allows the arguments of a func in funclist to be the output of some other func in funclist
-        :param funcparams: a dictionary of parameters to give all functions in the funclist
+        :param funcparams: a dictionary of parameters to give all functions in the funclist or a list of dicts to give each function
         :param batchsize: the size of how many samples to generate at once
         :param seed: the random seed to use when generating samples
         :param generatorReturnsBatch: if True when generating new batches it will return a tuple of (input features, outputs)
@@ -35,7 +35,17 @@ class Curridata(object):
             raise ValueError("funclist and dependencies must have same length")
         self.funclist = funclist
         self.dependencies = dependencies
-        self.funcparams = funcparams
+        if isinstance(funcparams, dict):
+            self.funcparams = [funcparams] * self.nfeatures
+        elif isinstance(funcparams, list) or isinstance(funcparams, tuple):
+            if len(funcparams) == 1:
+                self.funcparams = funcparams * self.nfeatures
+            elif len(funcparams) == self.nfeatures:
+                self.funcparams = funcparams
+            else:
+                raise ValueError("funcparams length is {0} but must have same length as funclist which is {1}".format(len(funcparams), self.nfeatures))
+        else:
+            raise ValueError("funcparams must be a dict, list or tuple")
 
         self.__data = None
         self.__features = [None for _ in range(self.nfeatures)]
@@ -53,7 +63,6 @@ class Curridata(object):
 
     def send(self, sendArg):
         self.__data = self._iterate()
-        self.__data.update(self.funcparams)
         self.__features = [None for _ in range(self.nfeatures)]
         if self.generatorReturnsBatch:
             return self.getter(self.feature_input), self.getter(self.feature_output)
@@ -97,12 +106,13 @@ class Curridata(object):
         if self.__features[i] is not None:
             return self.__features[i]
         else:
+            data_tmp = copy.copy(self.__data)
+            data_tmp.update(self.funcparams[i])
             if self.dependencies[i] is not None:
-                tmp = copy.copy(self.__data)
                 for t, u in six.iteritems(self.dependencies[i]):
                     self.getter(u)
-                    tmp.update({t: self.__features[u]})
-                self.__features[i] = self.funclist[i](**tmp)
+                    data_tmp.update({t: self.__features[u]})
+                self.__features[i] = self.funclist[i](**data_tmp)
             else:
-                self.__features[i] = self.funclist[i](**self.__data)
+                self.__features[i] = self.funclist[i](**data_tmp)
         return self.__features[i]
