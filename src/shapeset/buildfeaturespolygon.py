@@ -155,15 +155,6 @@ def buildimage_filter_bayer_patch(rval_image, batchsize, img_shape, **dic):
     return rval_image_out
 
 
-def buildimage_noise(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, sigma_noise, **dic):
-    rval_image_no_noise = buildimage(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
-    noise = np.random.standard_normal(size=rval_image_no_noise.shape) * sigma_noise
-    rval_image_out = rval_image_no_noise + noise
-    rval_image_out[rval_image_out < 0.] = 0.
-    rval_image_out[rval_image_out > 1.] = 1.
-    return rval_image_out
-
-
 def buildimage_4D_corrupt(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg, sigma_factor, sigma_noise, **dic):
     rval_image_out = buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval_fg, img_shape, neg)
     rval_image_out = corrupt_images(rval_image_out, sigma_noise=sigma_noise, sigma_factor=sigma_factor)
