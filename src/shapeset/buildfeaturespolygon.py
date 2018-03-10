@@ -10,6 +10,12 @@ import itertools
 pygame.surfarray.use_arraytype('numpy')
 
 _saved_Bayer_Patches = {}
+_rng = np.random.RandomState(0)
+
+
+def set_seed(seed):
+    global _rng
+    _rng = np.random.RandomState(seed=seed)
 
 
 def make_bayer_patch(img_shape):
@@ -69,10 +75,10 @@ def get_weighted_noise_blob(images_shape, sigma_noise=1.0, sigma_factor=(1.0, 1.
     width = images_shape[1]
     height = images_shape[2]
     # get noise
-    noise = np.random.standard_normal(images_shape) * sigma_noise
+    noise = _rng.standard_normal(images_shape) * sigma_noise
     # make weights for noise
-    mu_x = np.random.randint(0, width, size=(samples,))
-    mu_y = np.random.randint(0, height, size=(samples,))
+    mu_x = _rng.randint(0, width, size=(samples,))
+    mu_y = _rng.randint(0, height, size=(samples,))
     gw = gaussian_weight_batches(width, height, mu_x, mu_y, width * sigma_factor[0], height * sigma_factor[1])
     # apply weighting to noise
     weighted_noise = noise * gw[..., None]
@@ -132,7 +138,7 @@ def buildimage_4D(rval_points, rval_nbpol, nb_poly_max, batchsize, rval_bg, rval
 
 
 def buildimage_add_noise(rval_image, sigma_noise, **dic):
-    noise = np.random.standard_normal(size=rval_image.shape) * sigma_noise
+    noise = _rng.standard_normal(size=rval_image.shape) * sigma_noise
     rval_image_out = rval_image + noise
     rval_image_out = np.clip(rval_image_out, 0, 1)
     return rval_image_out

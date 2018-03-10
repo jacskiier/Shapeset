@@ -17,7 +17,7 @@ genparams = {'inv_chance': 0.5, 'img_shape': (128, 128, 3), 'n_vert_list': [3, 4
              'bg_min': (0.0,) * 3, 'bg_max': (0.45,) * 3, 'rot_min': 0.0, 'rot_max': 1.0, 'pos_min': 0, 'pos_max': 1,
              'scale_min': 0.2, 'scale_max': 0.8, 'rotation_resolution': 255,
              'nb_poly_max': 10, 'nb_poly_min': 1, 'overlap_max': 0.5, 'poly_type': 2, 'rejectionmax': 50,
-             'overlap_bool': True}
+             'overlap_bool': False}
 
 # genparams2 = {'poly_type' :2,'rot_max' : 1}
 
@@ -28,7 +28,7 @@ funclist = [buildimage, buildedgesangle, builddepthmap, buildidentity, buildsegm
 dependencies = [None, {'segmentation': 4}, None, None, {'depthmap': 2},
                 None, {'segmentation': 4}, None, None, None,
                 None, {'rval_image': 0}, {'rval_image': 11}]
-funcparams = {'neighbor': 'V8', 'gaussfiltbool': False, 'sigma': 0.5, 'size': 5, 'neg': False, 'sigma_noise': 0.3, 'sigma_factor': 0.3}
+funcparams = {'neighbor': 'V8', 'gaussfiltbool': False, 'sigma': 0.5, 'size': 5, 'neg': False, 'sigma_noise': 1.0, 'sigma_factor': 0.1}
 batchsize = n * m
 seed = 0
 
